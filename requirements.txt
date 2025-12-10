@@ -1,0 +1,61 @@
+# Core Framework
+Flask==3.0.0
+Werkzeug==3.0.1
+
+# Database ORM
+SQLAlchemy==2.0.23
+Flask-SQLAlchemy==3.1.1
+
+# Migrations
+Flask-Migrate==4.0.5
+alembic==1.13.1
+
+# Forms and Validation
+Flask-WTF==1.2.1
+WTForms==3.1.1
+email-validator==2.1.0
+
+# PDF Processing
+PyPDF2==3.0.1
+pdfplumber==0.10.3
+pikepdf==8.10.1
+
+# Excel Processing
+openpyxl==3.1.2
+xlrd==2.0.1
+
+# Date and Time
+python-dateutil==2.8.2
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# HTTP Requests (para extracción de URLs)
+requests==2.31.0
+urllib3==2.1.0
+
+# Regex and Text Processing
+regex==2023.10.3
+
+# File Handling
+filetype==1.2.0
+
+# Development Tools
+Flask-DebugToolbar==0.14.1
+
+# Testing
+pytest==7.4.3
+pytest-flask==1.3.0
+pytest-cov==4.1.0
+
+# Code Quality
+flake8==6.1.0
+black==23.12.1
+
+# Security
+MarkupSafe==2.1.3
+
+# Utilities
+click==8.1.7
+itsdangerous==2.1.2
+Jinja2==3.1.2
