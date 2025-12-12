@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Acerca de - SGAA{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <h1 class="mb-4">
+            <i class="bi bi-info-circle"></i>
+            Acerca del Sistema
+        </h1>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3 class="card-title">
+                    <i class="bi bi-journal-text"></i>
+                    Sistema de Gestión de Artículos Académicos (SGAA)
+                </h3>
+                <p class="card-text">
+                    Sistema web diseñado para facilitar la gestión de producciones académicas de un Cuerpo Académico,
+                    reduciendo significativamente la captura manual de datos mediante extracción automática desde PDFs.
+                </p>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-gear"></i>
+                    Tecnologías Utilizadas
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><i class="bi bi-check-circle text-success"></i> <strong>Flask 3.0</strong> - Framework web</li>
+                    <li><i class="bi bi-check-circle text-success"></i> <strong>SQLAlchemy</strong> - ORM para base de datos</li>
+                    <li><i class="bi bi-check-circle text-success"></i> <strong>SQLite</strong> - Base de datos (desarrollo)</li>
+                    <li><i class="bi bi-check-circle text-success"></i> <strong>PyPDF2 / pdfplumber</strong> - Extracción de PDFs</li>
+                    <li><i class="bi bi-check-circle text-success"></i> <strong>openpyxl</strong> - Generación de Excel</li>
+                    <li><i class="bi bi-check-circle text-success"></i> <strong>Bootstrap 5</strong> - Interfaz de usuario</li>
+                    <li><i class="bi bi-check-circle text-success"></i> <strong>Python threading</strong> - Tareas en background</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-check"></i>
+                    Funcionalidades Principales
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-file-text text-primary"></i> Gestión de Artículos</h6>
+                        <ul>
+                            <li>CRUD completo</li>
+                            <li>Validaciones</li>
+                            <li>Búsqueda y filtrado</li>
+                            <li>Paginación</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-upload text-success"></i> Procesamiento PDF</h6>
+                        <ul>
+                            <li>Extracción automática</li>
+                            <li>Pre-llenado de formularios</li>
+                            <li>Validación de archivos</li>
+                            <li>Almacenamiento seguro</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-file-earmark-excel text-info"></i> Reportes</h6>
+                        <ul>
+                            <li>Exportación a Excel</li>
+                            <li>Formato institucional</li>
+                            <li>Generación automática</li>
+                            <li>Filtros personalizados</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-list-ul text-warning"></i> Catálogos</h6>
+                        <ul>
+                            <li>Tipos de producción</li>
+                            <li>Estados</li>
+                            <li>LGAC</li>
+                            <li>Indexaciones</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-diagram-3"></i>
+                    Arquitectura
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>El sistema implementa el patrón <strong>MVC (Modelo-Vista-Controlador)</strong> organizado por módulos:</p>
+                <ul>
+                    <li><strong>Modelos</strong> - Entidades de base de datos (Artículo, Autor, Revista, etc.)</li>
+                    <li><strong>Vistas</strong> - Blueprints de Flask para rutas HTTP</li>
+                    <li><strong>Controladores</strong> - Lógica de negocio</li>
+                    <li><strong>Servicios</strong> - Funcionalidades especializadas (PDF, Excel, Background)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mb-4 border-warning">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-exclamation-triangle text-warning"></i>
+                    Versión Actual
+                </h5>
+                <p class="card-text mb-0">
+                    <strong>MVP v1.0</strong> - Producto Mínimo Viable con funcionalidades esenciales.
+                    <br>
+                    <small class="text-muted">Fecha de desarrollo: Diciembre 2025</small>
+                </p>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Volver al inicio
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

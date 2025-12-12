@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio - SGAA{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="bi bi-house-door"></i>
+            Sistema de Gestión de Artículos Académicos
+        </h1>
+        <p class="lead">Bienvenido al sistema de gestión de producciones académicas del Cuerpo Académico.</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Card: Artículos -->
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <i class="bi bi-file-text display-1 text-primary"></i>
+                <h5 class="card-title mt-3">Artículos</h5>
+                <p class="card-text">Gestiona los artículos y producciones académicas</p>
+                <a href="{{ url_for('articles.index') }}" class="btn btn-primary">
+                    <i class="bi bi-arrow-right"></i> Ver artículos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card: Subir PDF -->
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <i class="bi bi-upload display-1 text-success"></i>
+                <h5 class="card-title mt-3">Subir PDF</h5>
+                <p class="card-text">Extrae metadatos automáticamente desde PDFs</p>
+                <a href="{{ url_for('uploads.index') }}" class="btn btn-success">
+                    <i class="bi bi-arrow-right"></i> Subir archivo
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card: Catálogos -->
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <i class="bi bi-list-ul display-1 text-info"></i>
+                <h5 class="card-title mt-3">Catálogos</h5>
+                <p class="card-text">Administra tipos, estados, LGAC e indexaciones</p>
+                <a href="{{ url_for('catalogs.index') }}" class="btn btn-info">
+                    <i class="bi bi-arrow-right"></i> Ver catálogos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card: Reportes -->
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <i class="bi bi-file-earmark-excel display-1 text-warning"></i>
+                <h5 class="card-title mt-3">Reportes</h5>
+                <p class="card-text">Exporta artículos al formato institucional</p>
+                <a href="{{ url_for('reports.index') }}" class="btn btn-warning">
+                    <i class="bi bi-arrow-right"></i> Generar reporte
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sección de características -->
+<div class="row mt-4">
+    <div class="col-12">
+        <h3 class="mb-4">
+            <i class="bi bi-stars"></i>
+            Características del Sistema
+        </h3>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-magic text-primary"></i>
+                    Extracción Automática
+                </h5>
+                <p class="card-text">
+                    Sube un PDF y el sistema extrae automáticamente título, autores, año, DOI y más metadatos.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-filter text-success"></i>
+                    Filtrado Avanzado
+                </h5>
+                <p class="card-text">
+                    Filtra artículos por año, estado, LGAC, autor y más criterios para encontrar lo que necesitas.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-file-earmark-spreadsheet text-info"></i>
+                    Exportación Excel
+                </h5>
+                <p class="card-text">
+                    Genera archivos Excel con el formato institucional requerido por el Cuerpo Académico.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sección de inicio rápido -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h4 class="card-title">
+                    <i class="bi bi-rocket-takeoff"></i>
+                    Inicio Rápido
+                </h4>
+                <ol class="mb-0">
+                    <li>Sube un PDF de un artículo usando el botón <strong>"Subir PDF"</strong></li>
+                    <li>Revisa los metadatos extraídos automáticamente</li>
+                    <li>Completa la información faltante en el formulario</li>
+                    <li>Guarda el artículo en la base de datos</li>
+                    <li>Exporta a Excel cuando necesites el reporte institucional</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

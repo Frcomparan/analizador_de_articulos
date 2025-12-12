@@ -24,18 +24,18 @@ Este documento presenta el roadmap detallado para implementar el MVP (Producto M
 
 2. **Configuración de Base de Datos** (2 días)
 
-   - [ ] Configurar SQLAlchemy
-   - [ ] Crear modelos base (Artículo, Autor, Revista)
-   - [ ] Crear modelos de catálogos
-   - [ ] Configurar Flask-Migrate
-   - [ ] Generar primera migración
-   - [ ] Crear script de seed data (catálogos iniciales)
+   - [x] Configurar SQLAlchemy
+   - [x] Crear modelos base (Artículo, Autor, Revista)
+   - [x] Crear modelos de catálogos
+   - [x] Configurar Flask-Migrate
+   - [x] Generar primera migración
+   - [x] Crear script de seed data (catálogos iniciales)
 
 3. **Estructura MVC Base** (1 día)
-   - [ ] Implementar Factory Pattern en `app/__init__.py`
-   - [ ] Crear Blueprints básicos (main, articles, catalogs)
-   - [ ] Configurar routing básico
-   - [ ] Crear template base con Bootstrap
+   - [x] Implementar Factory Pattern en `app/__init__.py`
+   - [x] Crear Blueprints básicos (main, articles, catalogs)
+   - [x] Configurar routing básico
+   - [x] Crear template base con Bootstrap
 
 **Entregables**:
 

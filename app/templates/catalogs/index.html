@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Catálogos - SGAA{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1>
+            <i class="bi bi-list-ul"></i>
+            Catálogos del Sistema
+        </h1>
+        <p class="text-muted">Administra los catálogos maestros utilizados en el sistema</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Tipos de Producción -->
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-tags text-primary"></i>
+                    Tipos de Producción
+                </h5>
+                <p class="card-text">Artículo científico, Review, Conference paper, etc.</p>
+                <a href="{{ url_for('catalogs.tipos_produccion') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-arrow-right"></i> Administrar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estados -->
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-flag text-success"></i>
+                    Estados
+                </h5>
+                <p class="card-text">En preparación, Enviado, Publicado, etc.</p>
+                <a href="{{ url_for('catalogs.estados') }}" class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-arrow-right"></i> Administrar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- LGAC -->
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-diagram-3 text-info"></i>
+                    LGAC
+                </h5>
+                <p class="card-text">Líneas de Generación y Aplicación del Conocimiento</p>
+                <a href="{{ url_for('catalogs.lgac') }}" class="btn btn-sm btn-outline-info">
+                    <i class="bi bi-arrow-right"></i> Administrar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indexaciones -->
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-book text-warning"></i>
+                    Indexaciones
+                </h5>
+                <p class="card-text">Scopus, WoS, SciELO, Latindex, etc.</p>
+                <a href="{{ url_for('catalogs.indexaciones') }}" class="btn btn-sm btn-outline-warning">
+                    <i class="bi bi-arrow-right"></i> Administrar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Propósitos -->
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-bullseye text-danger"></i>
+                    Propósitos
+                </h5>
+                <p class="card-text">Investigación básica, aplicada, divulgación, etc.</p>
+                <a href="#" class="btn btn-sm btn-outline-danger disabled">
+                    <i class="bi bi-arrow-right"></i> Administrar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Países -->
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-globe text-secondary"></i>
+                    Países
+                </h5>
+                <p class="card-text">Países de publicación de revistas</p>
+                <a href="#" class="btn btn-sm btn-outline-secondary disabled">
+                    <i class="bi bi-arrow-right"></i> Administrar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h5 class="alert-heading">
+                <i class="bi bi-info-circle"></i>
+                Información
+            </h5>
+            <p class="mb-0">
+                La gestión completa de catálogos se implementará en la <strong>Fase 7</strong>.
+                Actualmente, los catálogos fueron poblados con datos iniciales durante la configuración.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
