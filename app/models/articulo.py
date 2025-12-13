@@ -67,6 +67,27 @@ class Articulo(db.Model):
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, 
                           onupdate=datetime.utcnow)
     
+    # === Relaciones ===
+    # Relación con TipoProduccion (muchos a uno)
+    tipo = db.relationship('TipoProduccion', back_populates='articulos', lazy='joined')
+    
+    # Relación con Proposito (muchos a uno)
+    proposito = db.relationship('Proposito', back_populates='articulos', lazy='joined')
+    
+    # Relación con LGAC (muchos a uno)
+    lgac = db.relationship('LGAC', back_populates='articulos', lazy='joined')
+    
+    # Relación con Estado (muchos a uno)
+    estado = db.relationship('Estado', back_populates='articulos', lazy='joined')
+    
+    # Relación con Revista (muchos a uno)
+    revista = db.relationship('Revista', back_populates='articulos', lazy='joined')
+    
+    # Nota: Las relaciones N:N con Autores e Indexaciones están definidas
+    # en las tablas intermedias ArticuloAutor y ArticuloIndexacion
+    # Acceso a autores a través de: articulo.articulo_autores
+    # Acceso a indexaciones a través de: articulo.articulo_indexaciones
+    
     def __repr__(self):
         return f'<Articulo {self.titulo[:50]}...>'
     
@@ -152,6 +173,7 @@ class Articulo(db.Model):
         Actualiza el campo campos_faltantes con la lista de campos faltantes.
         """
         import json
+        from app.models.relations import ArticuloAutor
         
         campos_obligatorios = [
             ('titulo', 'Título'),
@@ -180,9 +202,16 @@ class Articulo(db.Model):
             if valor is None or (isinstance(valor, str) and not valor.strip()):
                 faltantes.append(nombre)
         
-        # Verificar que tenga al menos un autor
-        if not hasattr(self, 'articulo_autores') or not self.articulo_autores:
-            faltantes.append('Autores')
+        # Verificar que tenga al menos un autor - hacer query directo si el objeto está persistido
+        if self.id:
+            # Si el artículo ya existe en la DB, hacer un query directo
+            num_autores = db.session.query(ArticuloAutor).filter_by(articulo_id=self.id).count()
+            if num_autores == 0:
+                faltantes.append('Autores')
+        else:
+            # Si es un objeto nuevo, verificar la relación cargada
+            if not hasattr(self, 'articulo_autores') or not self.articulo_autores:
+                faltantes.append('Autores')
         
         self.campos_faltantes = json.dumps(faltantes, ensure_ascii=False) if faltantes else None
         self.completo = len(faltantes) == 0
@@ -225,3 +254,230 @@ class Articulo(db.Model):
             'Nombre del congreso': self.nombre_congreso or '',
             'Para currículum CA': 'Sí' if self.para_curriculum else 'No'
         }
+    
+    # === Métodos de validación ===
+    
+    def validar_doi(self):
+        """
+        Valida que el formato del DOI sea correcto.
+        Formato típico: 10.xxxx/xxxxx
+        """
+        if not self.doi:
+            return True
+        
+        import re
+        patron_doi = r'^10\.\d{4,9}/[-._;()/:A-Z0-9]+$'
+        return bool(re.match(patron_doi, self.doi, re.IGNORECASE))
+    
+    def validar_issn(self):
+        """
+        Valida que el formato del ISSN sea correcto.
+        Formato: XXXX-XXXX (8 dígitos con guion)
+        """
+        if not self.issn:
+            return True
+        
+        import re
+        patron_issn = r'^\d{4}-\d{3}[\dX]$'
+        return bool(re.match(patron_issn, self.issn))
+    
+    def validar_anio(self):
+        """
+        Valida que el año de publicación sea razonable.
+        Debe estar entre 1900 y el año actual + 2
+        """
+        if not self.anio_publicacion:
+            return True
+        
+        from datetime import datetime
+        anio_actual = datetime.now().year
+        return 1900 <= self.anio_publicacion <= anio_actual + 2
+    
+    def validar_paginas(self):
+        """
+        Valida que el rango de páginas sea coherente.
+        pagina_fin debe ser mayor o igual a pagina_inicio
+        """
+        if self.pagina_inicio and self.pagina_fin:
+            return self.pagina_fin >= self.pagina_inicio
+        return True
+    
+    def validar_quartil(self):
+        """
+        Valida que el quartil sea uno de los valores permitidos.
+        """
+        if not self.quartil:
+            return True
+        
+        quartiles_validos = ['Q1', 'Q2', 'Q3', 'Q4']
+        return self.quartil.upper() in quartiles_validos
+    
+    def validar(self):
+        """
+        Ejecuta todas las validaciones del modelo.
+        Retorna (es_valido, lista_errores)
+        """
+        errores = []
+        
+        if not self.validar_doi():
+            errores.append('El formato del DOI no es válido. Debe ser: 10.xxxx/xxxxx')
+        
+        if not self.validar_issn():
+            errores.append('El formato del ISSN no es válido. Debe ser: XXXX-XXXX')
+        
+        if not self.validar_anio():
+            errores.append('El año de publicación debe estar entre 1900 y el año actual + 2')
+        
+        if not self.validar_paginas():
+            errores.append('La página final debe ser mayor o igual a la página inicial')
+        
+        if not self.validar_quartil():
+            errores.append('El quartil debe ser uno de: Q1, Q2, Q3, Q4')
+        
+        return len(errores) == 0, errores
+    
+    # === Métodos de negocio ===
+    
+    def agregar_autor(self, autor, orden=None, es_corresponsal=False):
+        """
+        Agrega un autor al artículo.
+        
+        Args:
+            autor: Instancia de Autor
+            orden: Orden del autor en la lista (si es None, se asigna el siguiente)
+            es_corresponsal: Si es el autor corresponsal
+        
+        Returns:
+            ArticuloAutor creado
+        """
+        from app.models.relations import ArticuloAutor
+        
+        if orden is None:
+            # Obtener el siguiente orden disponible
+            max_orden = db.session.query(db.func.max(ArticuloAutor.orden))\
+                .filter_by(articulo_id=self.id)\
+                .scalar()
+            orden = (max_orden or 0) + 1
+        
+        articulo_autor = ArticuloAutor(
+            articulo_id=self.id,
+            autor_id=autor.id,
+            orden=orden,
+            es_corresponsal=es_corresponsal
+        )
+        
+        db.session.add(articulo_autor)
+        return articulo_autor
+    
+    def remover_autor(self, autor):
+        """
+        Remueve un autor del artículo y reorganiza los órdenes.
+        """
+        from app.models.relations import ArticuloAutor
+        
+        ArticuloAutor.query.filter_by(
+            articulo_id=self.id,
+            autor_id=autor.id
+        ).delete()
+        
+        # Reorganizar órdenes
+        autores = ArticuloAutor.query.filter_by(articulo_id=self.id)\
+            .order_by(ArticuloAutor.orden).all()
+        
+        for idx, aa in enumerate(autores, start=1):
+            aa.orden = idx
+    
+    def agregar_indexacion(self, indexacion, fecha_verificacion=None):
+        """
+        Agrega una indexación específica al artículo.
+        
+        Args:
+            indexacion: Instancia de Indexacion
+            fecha_verificacion: Fecha en que se verificó la indexación
+        
+        Returns:
+            ArticuloIndexacion creado
+        """
+        from app.models.relations import ArticuloIndexacion
+        
+        articulo_indexacion = ArticuloIndexacion(
+            articulo_id=self.id,
+            indexacion_id=indexacion.id,
+            fecha_verificacion=fecha_verificacion
+        )
+        
+        db.session.add(articulo_indexacion)
+        return articulo_indexacion
+    
+    def obtener_todas_indexaciones(self):
+        """
+        Obtiene todas las indexaciones del artículo.
+        Combina las indexaciones de la revista y las específicas del artículo.
+        
+        Returns:
+            Lista de objetos Indexacion (sin duplicados)
+        """
+        indexaciones = set()
+        
+        # Indexaciones de la revista
+        if self.revista:
+            for ri in self.revista.revista_indexaciones:
+                if ri.activo:
+                    indexaciones.add(ri.indexacion)
+        
+        # Indexaciones específicas del artículo
+        for ai in self.articulo_indexaciones:
+            indexaciones.add(ai.indexacion)
+        
+        return list(indexaciones)
+    
+    @staticmethod
+    def buscar(query=None, tipo_id=None, estado_id=None, lgac_id=None, 
+               anio=None, autor_id=None, para_curriculum=None):
+        """
+        Método estático para búsqueda avanzada de artículos.
+        
+        Args:
+            query: Texto a buscar en título o revista
+            tipo_id: ID del tipo de producción
+            estado_id: ID del estado
+            lgac_id: ID de la LGAC
+            anio: Año de publicación
+            autor_id: ID del autor
+            para_curriculum: Filtrar por artículos para currículum
+        
+        Returns:
+            Query de SQLAlchemy (permite agregar más filtros o paginación)
+        """
+        from app.models.relations import ArticuloAutor
+        
+        articulos = Articulo.query.filter_by(activo=True)
+        
+        if query:
+            articulos = articulos.filter(
+                db.or_(
+                    Articulo.titulo.ilike(f'%{query}%'),
+                    Articulo.titulo_revista.ilike(f'%{query}%')
+                )
+            )
+        
+        if tipo_id:
+            articulos = articulos.filter_by(tipo_produccion_id=tipo_id)
+        
+        if estado_id:
+            articulos = articulos.filter_by(estado_id=estado_id)
+        
+        if lgac_id:
+            articulos = articulos.filter_by(lgac_id=lgac_id)
+        
+        if anio:
+            articulos = articulos.filter_by(anio_publicacion=anio)
+        
+        if autor_id:
+            articulos = articulos.join(ArticuloAutor)\
+                .filter(ArticuloAutor.autor_id == autor_id)
+        
+        if para_curriculum is not None:
+            articulos = articulos.filter_by(para_curriculum=para_curriculum)
+        
+        return articulos

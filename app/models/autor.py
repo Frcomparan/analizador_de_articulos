@@ -165,3 +165,101 @@ class Autor(db.Model):
         """Actualiza el campo nombre_normalizado basado en nombre y apellidos."""
         texto_completo = f"{self.nombre} {self.apellidos}"
         self.nombre_normalizado = self.normalizar_texto(texto_completo)
+    
+    # === Métodos de validación ===
+    
+    def validar_orcid(self):
+        """
+        Valida que el formato del ORCID sea correcto.
+        Formato: XXXX-XXXX-XXXX-XXXX (16 dígitos con guiones)
+        """
+        if not self.orcid:
+            return True
+        
+        import re
+        patron_orcid = r'^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$'
+        return bool(re.match(patron_orcid, self.orcid))
+    
+    def validar_email(self):
+        """
+        Valida que el formato del email sea correcto.
+        """
+        if not self.email:
+            return True
+        
+        import re
+        patron_email = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        return bool(re.match(patron_email, self.email))
+    
+    def validar(self):
+        """
+        Ejecuta todas las validaciones del modelo.
+        Retorna (es_valido, lista_errores)
+        """
+        errores = []
+        
+        if not self.nombre or not self.nombre.strip():
+            errores.append('El nombre es obligatorio')
+        
+        if not self.apellidos or not self.apellidos.strip():
+            errores.append('Los apellidos son obligatorios')
+        
+        if not self.validar_orcid():
+            errores.append('El formato del ORCID no es válido. Debe ser: XXXX-XXXX-XXXX-XXXX')
+        
+        if not self.validar_email():
+            errores.append('El formato del email no es válido')
+        
+        return len(errores) == 0, errores
+    
+    def obtener_articulos(self, solo_publicados=False):
+        """
+        Obtiene todos los artículos del autor.
+        
+        Args:
+            solo_publicados: Si True, solo retorna artículos en estado 'Publicado'
+        
+        Returns:
+            Lista de artículos ordenados por año descendente
+        """
+        from app.models.relations import ArticuloAutor
+        from app.models.articulo import Articulo
+        
+        query = Articulo.query.join(ArticuloAutor)\
+            .filter(ArticuloAutor.autor_id == self.id)\
+            .filter(Articulo.activo == True)
+        
+        if solo_publicados:
+            from app.models.catalogs import Estado
+            estado_publicado = Estado.query.filter_by(nombre='Publicado').first()
+            if estado_publicado:
+                query = query.filter(Articulo.estado_id == estado_publicado.id)
+        
+        return query.order_by(Articulo.anio_publicacion.desc()).all()
+    
+    def contar_articulos(self, solo_publicados=False):
+        """
+        Cuenta el número de artículos del autor.
+        """
+        return len(self.obtener_articulos(solo_publicados=solo_publicados))
+    
+    def es_primer_autor_en(self, articulo):
+        """
+        Verifica si este autor es el primer autor de un artículo dado.
+        
+        Args:
+            articulo: Instancia de Articulo o ID de artículo
+        
+        Returns:
+            Boolean
+        """
+        from app.models.relations import ArticuloAutor
+        
+        articulo_id = articulo.id if hasattr(articulo, 'id') else articulo
+        
+        aa = ArticuloAutor.query.filter_by(
+            articulo_id=articulo_id,
+            autor_id=self.id
+        ).first()
+        
+        return aa.orden == 1 if aa else False

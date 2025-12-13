@@ -20,7 +20,7 @@ class TipoProduccion(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
     # Relación con artículos
-    articulos = db.relationship('Articulo', backref='tipo', lazy='dynamic')
+    articulos = db.relationship('Articulo', back_populates='tipo', lazy='dynamic')
     
     def __repr__(self):
         return f'<TipoProduccion {self.nombre}>'
@@ -48,7 +48,7 @@ class Proposito(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
     # Relación con artículos
-    articulos = db.relationship('Articulo', backref='proposito', lazy='dynamic')
+    articulos = db.relationship('Articulo', back_populates='proposito', lazy='dynamic')
     
     def __repr__(self):
         return f'<Proposito {self.nombre}>'
@@ -76,7 +76,7 @@ class Estado(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
     # Relación con artículos
-    articulos = db.relationship('Articulo', backref='estado', lazy='dynamic')
+    articulos = db.relationship('Articulo', back_populates='estado', lazy='dynamic')
     
     def __repr__(self):
         return f'<Estado {self.nombre}>'
@@ -104,7 +104,7 @@ class LGAC(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
     # Relación con artículos
-    articulos = db.relationship('Articulo', backref='lgac', lazy='dynamic')
+    articulos = db.relationship('Articulo', back_populates='lgac', lazy='dynamic')
     
     def __repr__(self):
         return f'<LGAC {self.nombre}>'

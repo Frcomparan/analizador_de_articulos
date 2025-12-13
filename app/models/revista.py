@@ -37,7 +37,7 @@ class Revista(db.Model):
                           onupdate=datetime.utcnow)
     
     # Relación con artículos
-    articulos = db.relationship('Articulo', backref='revista', lazy='dynamic')
+    articulos = db.relationship('Articulo', back_populates='revista', lazy='dynamic')
     
     # Relación N:N con indexaciones (se define en relations.py)
     
