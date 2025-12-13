@@ -36,15 +36,37 @@ def client(app):
 def init_database(app):
     """Inicializa la base de datos con datos de prueba."""
     with app.app_context():
-        # Crear catálogos básicos
-        tipo = TipoProduccion(nombre='Artículo científico', activo=True)
-        estado = Estado(nombre='Publicado', color='#28a745', activo=True)
-        lgac = LGAC(nombre='LGAC de prueba', activo=True)
-        proposito = Proposito(nombre='Investigación básica', activo=True)
-        pais = Pais(nombre='México', codigo_iso='MEX', activo=True)
-        indexacion = Indexacion(nombre='Scopus', acronimo='Scopus', prestigio=5, activo=True)
+        # Crear catálogos básicos (get_or_create para evitar duplicados)
+        tipo = TipoProduccion.query.filter_by(nombre='Artículo científico').first()
+        if not tipo:
+            tipo = TipoProduccion(nombre='Artículo científico', activo=True)
+            db.session.add(tipo)
+            
+        estado = Estado.query.filter_by(nombre='Publicado').first()
+        if not estado:
+            estado = Estado(nombre='Publicado', color='#28a745', activo=True)
+            db.session.add(estado)
+            
+        lgac = LGAC.query.filter_by(nombre='LGAC de prueba').first()
+        if not lgac:
+            lgac = LGAC(nombre='LGAC de prueba', activo=True)
+            db.session.add(lgac)
+            
+        proposito = Proposito.query.filter_by(nombre='Investigación básica').first()
+        if not proposito:
+            proposito = Proposito(nombre='Investigación básica', activo=True)
+            db.session.add(proposito)
+            
+        pais = Pais.query.filter_by(nombre='México').first()
+        if not pais:
+            pais = Pais(nombre='México', codigo_iso='MEX', activo=True)
+            db.session.add(pais)
+            
+        indexacion = Indexacion.query.filter_by(nombre='Scopus').first()
+        if not indexacion:
+            indexacion = Indexacion(nombre='Scopus', acronimo='Scopus', prestigio=5, activo=True)
+            db.session.add(indexacion)
         
-        db.session.add_all([tipo, estado, lgac, proposito, pais, indexacion])
         db.session.commit()
         
         yield db

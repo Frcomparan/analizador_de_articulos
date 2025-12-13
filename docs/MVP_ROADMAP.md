@@ -52,19 +52,19 @@ Este documento presenta el roadmap detallado para implementar el MVP (Producto M
 
 #### Tareas
 
-4. **Modelos y Relaciones** (2 días)
+4. **Modelos y Relaciones** (2 días) ✅
 
-   - [ ] Completar modelo `Articulo` con todas las relaciones
-   - [ ] Implementar métodos `to_dict()` y validaciones
-   - [ ] Crear tablas de asociación (N:N)
-   - [ ] Testear queries básicas
+   - [x] Completar modelo `Articulo` con todas las relaciones
+   - [x] Implementar métodos `to_dict()` y validaciones
+   - [x] Crear tablas de asociación (N:N)
+   - [x] Testear queries básicas
 
-5. **Formularios** (2 días)
+5. **Formularios** (2 días) ✅
 
-   - [ ] Crear `ArticleForm` con Flask-WTF
-   - [ ] Implementar validaciones de campos
-   - [ ] Crear campos dinámicos (SelectField para catálogos)
-   - [ ] Agregar validación de ISSN, DOI, año
+   - [x] Crear `ArticleForm` con Flask-WTF
+   - [x] Implementar validaciones de campos
+   - [x] Crear campos dinámicos (SelectField para catálogos)
+   - [x] Agregar validación de ISSN, DOI, año
 
 6. **Controladores** (3 días)
 

@@ -140,6 +140,33 @@ Abre tu navegador y accede a `http://localhost:5000`. Deberías ver:
 - Secciones: Inicio, Artículos, Subir PDF, Catálogos, Reportes
 - Interfaz con Bootstrap 5
 
+## Testing
+
+### Ejecutar Tests
+
+El proyecto incluye tests completos para modelos y formularios:
+
+```bash
+# Activar ambiente virtual primero
+.\venv\Scripts\Activate.ps1  # Windows
+# o
+source venv/bin/activate  # Linux/Mac
+
+# Ejecutar todos los tests
+pytest tests/ -v
+
+# Ejecutar solo tests de modelos
+pytest tests/test_models.py -v
+
+# Ejecutar solo tests de formularios
+pytest tests/test_forms.py -v
+
+# Ver cobertura
+pytest --cov=app tests/
+```
+
+**Estado actual**: ✅ 31 tests pasando (11 modelos + 20 formularios)
+
 ## Scripts Útiles
 
 ### Poblar Catálogos
@@ -369,28 +396,41 @@ analizador_articulos/
 - Revista → País (N:1)
 - Revista ↔ Indexaciones (N:N)
 
+## Documentación Adicional
+
+- **[MVP_ROADMAP.md](docs/MVP_ROADMAP.md)** - Roadmap detallado de desarrollo (8 fases)
+- **[FORMS.md](docs/FORMS.md)** - Documentación completa de formularios
+
+### Estado del Desarrollo
+
+**Fase 1: Configuración Base** ✅ Completa
+
+- Configuración del proyecto
+- Base de datos y migraciones
+- Estructura MVC
+
+**Fase 2: CRUD de Artículos** 🔄 En progreso
+
+- ✅ Paso 4: Modelos y relaciones completos
+- ✅ Paso 5: Formularios implementados (ArticleForm, ArticleSearchForm, ArticleAuthorForm)
+- ⏳ Paso 6: Controladores (siguiente)
+- ⏳ Paso 7: Vistas/Routes
+- ⏳ Paso 8: Templates
+
 ## Roadmap de Desarrollo
 
-### Fase 1: MVP Base (2 semanas)
+Ver [MVP_ROADMAP.md](docs/MVP_ROADMAP.md) para el plan completo.
 
-- [ ] Configuración inicial del proyecto
-- [ ] Modelos de base de datos
-- [ ] CRUD básico de artículos
-- [ ] Interfaz web simple
+### Resumen de Fases
 
-### Fase 2: Extracción Automática (2 semanas)
-
-- [ ] Upload de archivos PDF
-- [ ] Extracción de metadatos
-- [ ] Pre-llenado de formularios
-
-### Fase 3: Funcionalidades Avanzadas (2 semanas)
-
-- [ ] Sistema de filtrado
-- [ ] Exportación a Excel
-- [ ] Validaciones completas
-
-### Fase 4: Concurrencia y Optimización (1 semana)
+1. **Configuración Base** (5 días) - ✅ Completo
+2. **CRUD de Artículos** (11 días) - 🔄 En progreso (Paso 5/8 completo)
+3. **Extracción de PDFs** (9 días)
+4. **Sistema de Filtrado** (5 días)
+5. **Exportación Excel** (5 días)
+6. **Procesamiento Background** (5 días)
+7. **Gestión Catálogos** (5 días)
+8. **Testing y Refinamiento** (10 días)
 
 - [ ] Hilo en background
 - [ ] Detección de artículos incompletos
