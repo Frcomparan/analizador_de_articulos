@@ -22,14 +22,10 @@ from app.models import (
 def seed_tipos_produccion():
     """Pobla el catálogo de tipos de producción académica."""
     tipos = [
-        {'nombre': 'Artículo científico', 'descripcion': 'Artículo publicado en revista científica'},
-        {'nombre': 'Artículo de revisión (Review)', 'descripcion': 'Artículo de revisión de literatura'},
-        {'nombre': 'Conference paper', 'descripcion': 'Artículo presentado en conferencia o congreso'},
-        {'nombre': 'Capítulo de libro', 'descripcion': 'Capítulo publicado en libro académico'},
-        {'nombre': 'Libro', 'descripcion': 'Libro completo publicado'},
-        {'nombre': 'Memoria de congreso', 'descripcion': 'Publicación en memorias de congreso'},
-        {'nombre': 'Artículo de divulgación', 'descripcion': 'Artículo de divulgación científica'},
-        {'nombre': 'Nota técnica', 'descripcion': 'Nota técnica o comunicación corta'},
+        {'nombre': 'Arbitrado', 'descripcion': "Artículo revisado por pares"},
+        {'nombre': 'Divulgación y Difusión', 'descripcion': "Artículo de divulgación científica"},
+        {'nombre': 'Indexado', 'descripcion': "Artículo en revista indexada"},
+        {'nombre': 'Memorias en extenso', 'descripcion': "Artículo completo en memorias de congresos"},
     ]
     
     for t in tipos:
@@ -42,12 +38,8 @@ def seed_tipos_produccion():
 def seed_propositos():
     """Pobla el catálogo de propósitos del artículo."""
     propositos = [
-        {'nombre': 'Investigación básica', 'descripcion': 'Investigación fundamental sin aplicación inmediata'},
         {'nombre': 'Investigación aplicada', 'descripcion': 'Investigación orientada a resolver problemas específicos'},
         {'nombre': 'Desarrollo tecnológico', 'descripcion': 'Desarrollo de nuevas tecnologías o mejoras'},
-        {'nombre': 'Divulgación', 'descripcion': 'Difusión del conocimiento al público general'},
-        {'nombre': 'Formación de recursos humanos', 'descripcion': 'Relacionado con tesis o formación de estudiantes'},
-        {'nombre': 'Vinculación', 'descripcion': 'Colaboración con sector productivo o social'},
     ]
     
     for p in propositos:
@@ -60,15 +52,8 @@ def seed_propositos():
 def seed_estados():
     """Pobla el catálogo de estados del artículo."""
     estados = [
-        {'nombre': 'En preparación', 'color': '#6c757d'},      # Gris
-        {'nombre': 'En revisión interna', 'color': '#17a2b8'}, # Cyan
-        {'nombre': 'Enviado', 'color': '#007bff'},             # Azul
-        {'nombre': 'En revisión por pares', 'color': '#ffc107'}, # Amarillo
-        {'nombre': 'Revisiones menores', 'color': '#fd7e14'},  # Naranja
-        {'nombre': 'Revisiones mayores', 'color': '#dc3545'},  # Rojo
-        {'nombre': 'Aceptado', 'color': '#20c997'},            # Verde claro
+        {'nombre': 'Aceptado', 'color': "#80108f"},            # Verde claro
         {'nombre': 'Publicado', 'color': '#28a745'},           # Verde
-        {'nombre': 'Rechazado', 'color': '#343a40'},           # Negro
     ]
     
     for e in estados:
@@ -84,12 +69,8 @@ def seed_lgac():
     NOTA: Estas son líneas de ejemplo. Deben personalizarse según el CA específico.
     """
     lgacs = [
-        {'nombre': 'LGAC 1 - Línea de ejemplo 1', 
-         'descripcion': 'Descripción de la primera línea de generación'},
-        {'nombre': 'LGAC 2 - Línea de ejemplo 2', 
-         'descripcion': 'Descripción de la segunda línea de generación'},
-        {'nombre': 'LGAC 3 - Línea de ejemplo 3', 
-         'descripcion': 'Descripción de la tercera línea de generación'},
+        {'nombre': 'Tecnologías emergentes y desarrollo web', 
+         'descripcion': 'Estudio y aplicación de nuevas tecnologías en el desarrollo de aplicaciones web.'},
     ]
     
     for l in lgacs:

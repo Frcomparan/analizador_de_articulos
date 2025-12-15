@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}{{ config.display_name }} - SGAA{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('catalogs.index') }}">Catálogos</a></li>
+                    <li class="breadcrumb-item active">{{ config.display_name }}</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h2">
+                    <i class="{{ config.icon }}"></i>
+                    {{ config.display_name }}
+                </h1>
+                <a href="{{ url_for('catalogs.new', catalog_name=catalog_name) }}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Nuevo {{ config.singular }}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra de búsqueda y filtros -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-6">
+                            <input type="text" 
+                                   name="query" 
+                                   class="form-control" 
+                                   placeholder="Buscar..." 
+                                   value="{{ query }}">
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       name="show_inactive" 
+                                       id="showInactive"
+                                       value="true"
+                                       {% if show_inactive %}checked{% endif %}>
+                                <label class="form-check-label" for="showInactive">
+                                    Mostrar inactivos
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-search"></i> Buscar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de registros -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if pagination.items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    {% for field in config.fields %}
+                                        {% if field != 'activo' and field != 'descripcion' %}
+                                        <th>{{ field|replace('_', ' ')|title }}</th>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <th>Estado</th>
+                                    <th class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for registro in pagination.items %}
+                                <tr>
+                                    <td>{{ registro.id }}</td>
+                                    {% for field in config.fields %}
+                                        {% if field != 'activo' and field != 'descripcion' %}
+                                        <td>
+                                            {% if field == 'color' and registro[field] %}
+                                                <span class="badge" style="background-color: {{ registro[field] }}">
+                                                    {{ registro[field] }}
+                                                </span>
+                                            {% elif field == 'es_miembro_ca' %}
+                                                {% if registro[field] %}
+                                                    <span class="badge bg-success">Sí</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">No</span>
+                                                {% endif %}
+                                            {% elif field == 'prestigio' and registro[field] %}
+                                                <span class="badge bg-warning">{{ '⭐' * registro[field] }}</span>
+                                            {% elif field == 'pais_id' and registro.pais %}
+                                                {{ registro.pais.nombre }}
+                                            {% else %}
+                                                {{ registro[field] or '-' }}
+                                            {% endif %}
+                                        </td>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <td>
+                                        {% if registro.activo %}
+                                            <span class="badge bg-success">Activo</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactivo</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('catalogs.show', catalog_name=catalog_name, id=registro.id) }}" 
+                                               class="btn btn-outline-info"
+                                               title="Ver detalle">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('catalogs.edit', catalog_name=catalog_name, id=registro.id) }}" 
+                                               class="btn btn-outline-primary"
+                                               title="Editar">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <form method="POST" 
+                                                  action="{{ url_for('catalogs.toggle_active', catalog_name=catalog_name, id=registro.id) }}"
+                                                  class="d-inline">
+                                                <button type="submit" 
+                                                        class="btn btn-outline-{{ 'warning' if registro.activo else 'success' }}"
+                                                        title="{{ 'Desactivar' if registro.activo else 'Activar' }}">
+                                                    <i class="bi bi-{{ 'toggle-off' if registro.activo else 'toggle-on' }}"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginación -->
+                    {% if pagination.pages > 1 %}
+                    <nav aria-label="Paginación">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('catalogs.list_catalog', catalog_name=catalog_name, page=pagination.prev_num, query=query, show_inactive=show_inactive) }}">
+                                    Anterior
+                                </a>
+                            </li>
+                            
+                            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                                {% if page_num %}
+                                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                                        <a class="page-link" href="{{ url_for('catalogs.list_catalog', catalog_name=catalog_name, page=page_num, query=query, show_inactive=show_inactive) }}">
+                                            {{ page_num }}
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('catalogs.list_catalog', catalog_name=catalog_name, page=pagination.next_num, query=query, show_inactive=show_inactive) }}">
+                                    Siguiente
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    {% endif %}
+
+                    <p class="text-muted text-center mt-3">
+                        Mostrando {{ pagination.items|length }} de {{ pagination.total }} registros
+                    </p>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        No se encontraron registros. 
+                        <a href="{{ url_for('catalogs.new', catalog_name=catalog_name) }}">
+                            Crear el primer {{ config.singular }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

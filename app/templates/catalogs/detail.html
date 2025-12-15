@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}{{ config.singular }} - Detalle - SGAA{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('catalogs.index') }}">Catálogos</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('catalogs.list_catalog', catalog_name=catalog_name) }}">{{ config.display_name }}</a></li>
+                    <li class="breadcrumb-item active">Detalle</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h2">
+                    <i class="{{ config.icon }}"></i>
+                    Detalle de {{ config.singular }}
+                </h1>
+                <div>
+                    <a href="{{ url_for('catalogs.edit', catalog_name=catalog_name, id=registro.id) }}" 
+                       class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> Editar
+                    </a>
+                    <a href="{{ url_for('catalogs.list_catalog', catalog_name=catalog_name) }}" 
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Información general</h5>
+                    
+                    <dl class="row">
+                        <dt class="col-sm-3">ID:</dt>
+                        <dd class="col-sm-9">{{ registro.id }}</dd>
+                        
+                        {% for field in config.fields %}
+                            {% if field != 'activo' %}
+                                <dt class="col-sm-3">{{ field|replace('_', ' ')|title }}:</dt>
+                                <dd class="col-sm-9">
+                                    {% if field == 'color' and registro[field] %}
+                                        <span class="badge" style="background-color: {{ registro[field] }}; color: white;">
+                                            {{ registro[field] }}
+                                        </span>
+                                    {% elif field == 'es_miembro_ca' %}
+                                        {% if registro[field] %}
+                                            <span class="badge bg-success">Sí</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">No</span>
+                                        {% endif %}
+                                    {% elif field == 'prestigio' and registro[field] %}
+                                        <span class="badge bg-warning">
+                                            {{ '⭐' * registro[field] }} ({{ registro[field] }}/5)
+                                        </span>
+                                    {% elif field == 'pais_id' and registro.pais %}
+                                        {{ registro.pais.nombre }}
+                                        {% if registro.pais.codigo_iso %}
+                                            <small class="text-muted">({{ registro.pais.codigo_iso }})</small>
+                                        {% endif %}
+                                    {% elif field == 'url' and registro[field] %}
+                                        <a href="{{ registro[field] }}" target="_blank" class="text-break">
+                                            {{ registro[field] }}
+                                            <i class="bi bi-box-arrow-up-right"></i>
+                                        </a>
+                                    {% elif field == 'email' and registro[field] %}
+                                        <a href="mailto:{{ registro[field] }}">{{ registro[field] }}</a>
+                                    {% elif field == 'descripcion' and registro[field] %}
+                                        <p class="mb-0">{{ registro[field] }}</p>
+                                    {% else %}
+                                        {{ registro[field] or '-' }}
+                                    {% endif %}
+                                </dd>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <dt class="col-sm-3">Estado:</dt>
+                        <dd class="col-sm-9">
+                            {% if registro.activo %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Activo
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-x-circle"></i> Inactivo
+                                </span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Información adicional según el catálogo -->
+            {% if catalog_name == 'autores' and registro.articulos %}
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Artículos asociados</h5>
+                    <p class="text-muted">Este autor tiene {{ registro.articulos|length }} artículo(s) registrado(s)</p>
+                    <ul class="list-group list-group-flush">
+                        {% for aa in registro.articulos[:5] %}
+                        <li class="list-group-item">
+                            <a href="{{ url_for('articles.show', id=aa.articulo.id) }}">
+                                {{ aa.articulo.titulo }}
+                            </a>
+                            <small class="text-muted">
+                                ({{ aa.articulo.anio_publicacion or 'S/A' }})
+                            </small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% if registro.articulos|length > 5 %}
+                    <p class="text-center mt-2 mb-0">
+                        <small class="text-muted">Y {{ registro.articulos|length - 5 }} más...</small>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if catalog_name == 'revistas' and registro.articulos %}
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Artículos publicados</h5>
+                    <p class="text-muted">Esta revista tiene {{ registro.articulos|length }} artículo(s) registrado(s)</p>
+                    <ul class="list-group list-group-flush">
+                        {% for articulo in registro.articulos[:5] %}
+                        <li class="list-group-item">
+                            <a href="{{ url_for('articles.show', id=articulo.id) }}">
+                                {{ articulo.titulo }}
+                            </a>
+                            <small class="text-muted">
+                                ({{ articulo.anio_publicacion or 'S/A' }})
+                            </small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% if registro.articulos|length > 5 %}
+                    <p class="text-center mt-2 mb-0">
+                        <small class="text-muted">Y {{ registro.articulos|length - 5 }} más...</small>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Metadatos</h5>
+                    <dl class="row">
+                        {% if registro.created_at %}
+                        <dt class="col-sm-5">Creado:</dt>
+                        <dd class="col-sm-7">
+                            <small>{{ registro.created_at.strftime('%d/%m/%Y') }}</small><br>
+                            <small class="text-muted">{{ registro.created_at.strftime('%H:%M:%S') }}</small>
+                        </dd>
+                        {% endif %}
+                        
+                        {% if registro.updated_at %}
+                        <dt class="col-sm-5">Actualizado:</dt>
+                        <dd class="col-sm-7">
+                            <small>{{ registro.updated_at.strftime('%d/%m/%Y') }}</small><br>
+                            <small class="text-muted">{{ registro.updated_at.strftime('%H:%M:%S') }}</small>
+                        </dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Acciones</h5>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('catalogs.edit', catalog_name=catalog_name, id=registro.id) }}" 
+                           class="btn btn-primary">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                        
+                        <form method="POST" 
+                              action="{{ url_for('catalogs.toggle_active', catalog_name=catalog_name, id=registro.id) }}">
+                            <button type="submit" 
+                                    class="btn btn-{{ 'warning' if registro.activo else 'success' }} w-100">
+                                <i class="bi bi-toggle-{{ 'off' if registro.activo else 'on' }}"></i>
+                                {{ 'Desactivar' if registro.activo else 'Activar' }}
+                            </button>
+                        </form>
+                        
+                        <hr>
+                        
+                        <form method="POST" 
+                              action="{{ url_for('catalogs.delete', catalog_name=catalog_name, id=registro.id) }}"
+                              onsubmit="return confirm('¿Estás seguro de eliminar este registro? Esta acción no se puede deshacer.');">
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

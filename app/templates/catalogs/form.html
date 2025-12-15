@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Editar' if registro else 'Nuevo' }} {{ config.singular }} - SGAA{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('catalogs.index') }}">Catálogos</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('catalogs.list_catalog', catalog_name=catalog_name) }}">{{ config.display_name }}</a></li>
+                    <li class="breadcrumb-item active">{{ 'Editar' if registro else 'Nuevo' }}</li>
+                </ol>
+            </nav>
+            <h1 class="h2">
+                <i class="bi bi-{{ 'pencil-square' if registro else 'plus-circle' }}"></i>
+                {{ 'Editar' if registro else 'Nuevo' }} {{ config.singular }}
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 col-xl-6">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" novalidate>
+                        {{ form.hidden_tag() }}
+
+                        {% for field in form %}
+                            {% if field.name not in ['submit', 'csrf_token'] %}
+                                <div class="mb-3">
+                                    {% if field.type == 'BooleanField' %}
+                                        <div class="form-check form-switch">
+                                            {{ field(class="form-check-input" + (" is-invalid" if field.errors else "")) }}
+                                            {{ field.label(class="form-check-label") }}
+                                            {% if field.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ field.errors[0] }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% elif field.type == 'TextAreaField' %}
+                                        {{ field.label(class="form-label") }}
+                                        {{ field(class="form-control" + (" is-invalid" if field.errors else "")) }}
+                                        {% if field.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ field.errors[0] }}
+                                            </div>
+                                        {% endif %}
+                                    {% elif field.type == 'SelectField' %}
+                                        {{ field.label(class="form-label") }}
+                                        {{ field(class="form-select" + (" is-invalid" if field.errors else "")) }}
+                                        {% if field.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ field.errors[0] }}
+                                            </div>
+                                        {% endif %}
+                                    {% elif field.name == 'color' %}
+                                        {{ field.label(class="form-label") }}
+                                        <div class="input-group">
+                                            {{ field(class="form-control form-control-color" + (" is-invalid" if field.errors else "")) }}
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   value="{{ field.data or '#007bff' }}"
+                                                   id="color-text">
+                                        </div>
+                                        {% if field.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ field.errors[0] }}
+                                            </div>
+                                        {% endif %}
+                                    {% else %}
+                                        {{ field.label(class="form-label") }}
+                                        {{ field(class="form-control" + (" is-invalid" if field.errors else "")) }}
+                                        {% if field.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ field.errors[0] }}
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('catalogs.list_catalog', catalog_name=catalog_name) }}" 
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> {{ 'Actualizar' if registro else 'Crear' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {% if registro %}
+        <div class="col-lg-4 col-xl-6">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">Información del registro</h5>
+                    <dl class="row">
+                        <dt class="col-sm-4">ID:</dt>
+                        <dd class="col-sm-8">{{ registro.id }}</dd>
+                        
+                        {% if registro.created_at %}
+                        <dt class="col-sm-4">Creado:</dt>
+                        <dd class="col-sm-8">{{ registro.created_at.strftime('%d/%m/%Y %H:%M') }}</dd>
+                        {% endif %}
+                        
+                        {% if registro.updated_at %}
+                        <dt class="col-sm-4">Actualizado:</dt>
+                        <dd class="col-sm-8">{{ registro.updated_at.strftime('%d/%m/%Y %H:%M') }}</dd>
+                        {% endif %}
+                        
+                        <dt class="col-sm-4">Estado:</dt>
+                        <dd class="col-sm-8">
+                            {% if registro.activo %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                    
+                    <hr>
+                    
+                    <h6 class="text-danger">Zona de peligro</h6>
+                    <form method="POST" action="{{ url_for('catalogs.delete', catalog_name=catalog_name, id=registro.id) }}"
+                          onsubmit="return confirm('¿Estás seguro de eliminar este registro?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i> Eliminar registro
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Sincronizar color picker con input de texto
+    const colorPicker = document.querySelector('input[type="color"]');
+    const colorText = document.getElementById('color-text');
+    
+    if (colorPicker && colorText) {
+        colorPicker.addEventListener('input', function() {
+            colorText.value = this.value;
+        });
+        
+        colorText.addEventListener('input', function() {
+            if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+                colorPicker.value = this.value;
+            }
+        });
+    }
+</script>
+{% endblock %}
