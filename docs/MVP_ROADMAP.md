@@ -106,13 +106,13 @@ Este documento presenta el roadmap detallado para implementar el MVP (Producto M
 
 #### Tareas
 
-9. **Servicio de Upload** (2 días)
+9. **Servicio de Upload** (2 días) ✅
 
-   - [ ] Crear `FileHandler` para manejo de archivos
-   - [ ] Implementar validación de tipo MIME
-   - [ ] Configurar carpeta de uploads
-   - [ ] Generar nombres únicos de archivo
-   - [ ] Implementar limpieza de archivos antiguos
+   - [x] Crear `FileHandler` para manejo de archivos
+   - [x] Implementar validación de tipo MIME
+   - [x] Configurar carpeta de uploads
+   - [x] Generar nombres únicos de archivo
+   - [x] Implementar limpieza de archivos antiguos
 
 10. **Servicio de Extracción PDF** (3 días)
 
