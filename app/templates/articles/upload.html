@@ -1,0 +1,449 @@
+{% extends "base.html" %}
+
+{% block title %}Subir PDFs | Artículos{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>
+                <i class="bi bi-cloud-upload"></i>
+                Cargar Artículos desde PDF
+            </h2>
+            <a href="{{ url_for('articles.index') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver al listado
+            </a>
+        </div>
+        <p class="text-muted">
+            Sube hasta 10 archivos PDF simultáneamente. Los metadatos se extraerán automáticamente.
+        </p>
+    </div>
+</div>
+
+<!-- Instrucciones -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="alert alert-info">
+            <h5><i class="bi bi-info-circle"></i> ¿Cómo funciona?</h5>
+            <ol class="mb-0">
+                <li>Selecciona hasta 10 archivos PDF (arrastra y suelta o usa el botón)</li>
+                <li>Los PDFs se procesarán en paralelo automáticamente</li>
+                <li>Se extraerán metadatos: título, autores, año, DOI, ISSN, resumen, etc.</li>
+                <li>Los artículos se crearán automáticamente en la base de datos</li>
+                <li>Podrás editar o completar la información faltante desde el listado</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<!-- Zona de drag & drop -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <form id="uploadForm" method="POST" enctype="multipart/form-data">
+                    
+                    <!-- Drop zone -->
+                    <div id="dropZone" class="border rounded p-5 text-center mb-3" 
+                         style="border: 2px dashed #007bff !important; cursor: pointer; background-color: #f8f9fa;">
+                        <i class="bi bi-cloud-arrow-up" style="font-size: 4rem; color: #007bff;"></i>
+                        <h4 class="mt-3">Arrastra archivos PDF aquí</h4>
+                        <p class="text-muted mb-3">o haz clic para seleccionar archivos</p>
+                        <input type="file" id="fileInput" name="pdfs" multiple accept=".pdf,application/pdf" 
+                               style="display: none;">
+                        <button type="button" class="btn btn-primary" onclick="document.getElementById('fileInput').click();">
+                            <i class="bi bi-folder2-open"></i> Seleccionar archivos
+                        </button>
+                        <p class="text-muted small mt-2">Máximo 10 archivos, 10 MB cada uno</p>
+                    </div>
+                    
+                    <!-- Lista de archivos seleccionados -->
+                    <div id="fileList" class="mb-3" style="display: none;">
+                        <h5>Archivos seleccionados (<span id="fileCount">0</span>/10):</h5>
+                        <div class="list-group" id="fileItems"></div>
+                    </div>
+                    
+                    <!-- Botones de acción -->
+                    <div id="actionButtons" style="display: none;">
+                        <button type="submit" id="uploadBtn" class="btn btn-success btn-lg">
+                            <i class="bi bi-upload"></i> Subir y procesar archivos
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="clearFiles()">
+                            <i class="bi bi-x-circle"></i> Limpiar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Barra de progreso -->
+<div id="progressContainer" class="row mb-4" style="display: none;">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5><i class="bi bi-hourglass-split"></i> Procesando archivos...</h5>
+                <div class="progress mb-2" style="height: 30px;">
+                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 0%;">
+                        <span id="progressText">0%</span>
+                    </div>
+                </div>
+                <p class="text-muted mb-0">
+                    <span id="progressStatus">Subiendo archivos...</span>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resultados -->
+<div id="resultsContainer" class="row" style="display: none;">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-check-circle"></i> Procesamiento completado
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="resultsSummary" class="alert alert-success">
+                    <!-- Se llenará con JavaScript -->
+                </div>
+                
+                <h6>Detalles:</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Archivo</th>
+                                <th>Estado</th>
+                                <th>Título extraído</th>
+                                <th>Confianza</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTable">
+                            <!-- Se llenará con JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-3">
+                    <a href="{{ url_for('articles.index') }}" class="btn btn-primary">
+                        <i class="bi bi-list"></i> Ver listado de artículos
+                    </a>
+                    <button type="button" class="btn btn-secondary" onclick="location.reload()">
+                        <i class="bi bi-arrow-clockwise"></i> Subir más archivos
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+#dropZone.drag-over {
+    background-color: #e7f3ff !important;
+    border-color: #0056b3 !important;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+}
+
+.file-item .file-name {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-item .file-size {
+    margin-left: 10px;
+    color: #6c757d;
+}
+
+.file-item .remove-btn {
+    margin-left: 10px;
+}
+</style>
+
+<script>
+// Variables globales
+let selectedFiles = [];
+const MAX_FILES = 10;
+const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+
+// Elementos del DOM
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+const fileItems = document.getElementById('fileItems');
+const fileCount = document.getElementById('fileCount');
+const actionButtons = document.getElementById('actionButtons');
+const uploadForm = document.getElementById('uploadForm');
+const progressContainer = document.getElementById('progressContainer');
+const progressBar = document.getElementById('progressBar');
+const progressText = document.getElementById('progressText');
+const progressStatus = document.getElementById('progressStatus');
+const resultsContainer = document.getElementById('resultsContainer');
+const resultsSummary = document.getElementById('resultsSummary');
+const resultsTable = document.getElementById('resultsTable');
+
+// Eventos de drag & drop
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('drag-over');
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    
+    const files = Array.from(e.dataTransfer.files);
+    handleFiles(files);
+});
+
+// Click en drop zone
+dropZone.addEventListener('click', () => {
+    fileInput.click();
+});
+
+// Selección de archivos
+fileInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    handleFiles(files);
+});
+
+// Manejar archivos seleccionados
+function handleFiles(files) {
+    // Filtrar solo PDFs
+    const pdfFiles = files.filter(file => 
+        file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+    );
+    
+    if (pdfFiles.length === 0) {
+        alert('Por favor selecciona solo archivos PDF');
+        return;
+    }
+    
+    // Verificar límite de archivos
+    if (selectedFiles.length + pdfFiles.length > MAX_FILES) {
+        alert(`Solo puedes subir hasta ${MAX_FILES} archivos a la vez`);
+        return;
+    }
+    
+    // Verificar tamaño de archivos
+    for (const file of pdfFiles) {
+        if (file.size > MAX_SIZE) {
+            alert(`El archivo "${file.name}" es demasiado grande (máximo 10 MB)`);
+            return;
+        }
+    }
+    
+    // Agregar archivos
+    selectedFiles = [...selectedFiles, ...pdfFiles];
+    updateFileList();
+}
+
+// Actualizar lista de archivos
+function updateFileList() {
+    if (selectedFiles.length === 0) {
+        fileList.style.display = 'none';
+        actionButtons.style.display = 'none';
+        return;
+    }
+    
+    fileList.style.display = 'block';
+    actionButtons.style.display = 'block';
+    fileCount.textContent = selectedFiles.length;
+    
+    fileItems.innerHTML = '';
+    
+    selectedFiles.forEach((file, index) => {
+        const fileSize = formatFileSize(file.size);
+        
+        const item = document.createElement('div');
+        item.className = 'list-group-item file-item';
+        item.innerHTML = `
+            <div class="d-flex align-items-center w-100">
+                <i class="bi bi-file-earmark-pdf text-danger me-2" style="font-size: 1.5rem;"></i>
+                <span class="file-name">${file.name}</span>
+                <span class="file-size badge bg-secondary">${fileSize}</span>
+                <button type="button" class="btn btn-sm btn-danger remove-btn" onclick="removeFile(${index})">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        `;
+        
+        fileItems.appendChild(item);
+    });
+}
+
+// Eliminar archivo
+function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    updateFileList();
+}
+
+// Limpiar archivos
+function clearFiles() {
+    selectedFiles = [];
+    fileInput.value = '';
+    updateFileList();
+}
+
+// Formatear tamaño de archivo
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+// Submit del formulario
+uploadForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (selectedFiles.length === 0) {
+        alert('Selecciona al menos un archivo PDF');
+        return;
+    }
+    
+    // Mostrar progreso
+    progressContainer.style.display = 'block';
+    resultsContainer.style.display = 'none';
+    actionButtons.style.display = 'none';
+    
+    // Preparar FormData
+    const formData = new FormData();
+    selectedFiles.forEach(file => {
+        formData.append('pdfs', file);
+    });
+    
+    try {
+        // Enviar archivos
+        const response = await fetch('{{ url_for("articles.upload_pdfs") }}', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        // Mostrar resultados
+        displayResults(result);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al procesar los archivos. Por favor intenta nuevamente.');
+        progressContainer.style.display = 'none';
+        actionButtons.style.display = 'block';
+    }
+});
+
+// Mostrar resultados
+function displayResults(result) {
+    progressContainer.style.display = 'none';
+    resultsContainer.style.display = 'block';
+    
+    // Resumen
+    const successCount = result.success || 0;
+    const errorCount = result.errors || 0;
+    const totalCount = result.total || 0;
+    
+    resultsSummary.innerHTML = `
+        <h5><i class="bi bi-check-circle"></i> Procesamiento completado</h5>
+        <p class="mb-0">
+            <strong>${successCount}</strong> de <strong>${totalCount}</strong> archivos procesados exitosamente.
+            ${errorCount > 0 ? `<span class="text-danger">${errorCount} errores.</span>` : ''}
+        </p>
+    `;
+    
+    // Tabla de resultados
+    resultsTable.innerHTML = '';
+    
+    if (result.results && result.results.length > 0) {
+        result.results.forEach(item => {
+            const confidence = Math.round(item.confidence * 100);
+            let confidenceBadge = '';
+            
+            if (confidence >= 70) {
+                confidenceBadge = `<span class="badge bg-success">${confidence}%</span>`;
+            } else if (confidence >= 40) {
+                confidenceBadge = `<span class="badge bg-warning">${confidence}%</span>`;
+            } else {
+                confidenceBadge = `<span class="badge bg-danger">${confidence}%</span>`;
+            }
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>
+                    <i class="bi bi-file-earmark-pdf text-danger"></i>
+                    ${item.filename}
+                </td>
+                <td>
+                    <span class="badge bg-success">
+                        <i class="bi bi-check-circle"></i> Éxito
+                    </span>
+                </td>
+                <td>${item.title || '<em>Sin título</em>'}</td>
+                <td>${confidenceBadge}</td>
+                <td>
+                    <a href="/articles/${item.article_id}/edit" class="btn btn-sm btn-primary">
+                        <i class="bi bi-pencil"></i> Editar
+                    </a>
+                </td>
+            `;
+            
+            resultsTable.appendChild(row);
+        });
+    }
+    
+    // Errores
+    if (result.error_details && result.error_details.length > 0) {
+        result.error_details.forEach(error => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>
+                    <i class="bi bi-file-earmark-pdf text-danger"></i>
+                    ${error.filename}
+                </td>
+                <td>
+                    <span class="badge bg-danger">
+                        <i class="bi bi-x-circle"></i> Error
+                    </span>
+                </td>
+                <td colspan="2">
+                    <small class="text-danger">${error.error}</small>
+                </td>
+                <td>-</td>
+            `;
+            
+            resultsTable.appendChild(row);
+        });
+    }
+}
+
+// Actualizar progreso (simulado)
+function updateProgress(percent, status) {
+    progressBar.style.width = percent + '%';
+    progressText.textContent = Math.round(percent) + '%';
+    progressStatus.textContent = status;
+}
+</script>
+
+{% endblock %}

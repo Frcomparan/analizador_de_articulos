@@ -1,11 +1,16 @@
 """
 Blueprint de artículos - CRUD y gestión de artículos
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
 from app.controllers.article_controller import ArticleController
 from app.forms.article_form import ArticleForm, ArticleSearchForm
 from app.forms.utils import populate_form_choices
 from app.models import Articulo
+from app.services.pdf_batch_processor import PDFBatchProcessor
+from config import Config
+import logging
+
+logger = logging.getLogger(__name__)
 
 articles_bp = Blueprint('articles', __name__, url_prefix='/articles')
 
@@ -239,3 +244,78 @@ def restore(id):
     
     flash(f'Artículo "{articulo.titulo}" restaurado exitosamente', 'success')
     return redirect(url_for('articles.show', id=id))
+
+
+@articles_bp.route('/upload', methods=['GET'])
+def upload_form():
+    """
+    Mostrar formulario de upload de PDFs.
+    GET /articles/upload
+    """
+    return render_template('articles/upload.html')
+
+
+@articles_bp.route('/upload', methods=['POST'])
+def upload_pdfs():
+    """
+    Procesar múltiples PDFs en paralelo y crear artículos automáticamente.
+    POST /articles/upload
+    
+    Recibe:
+        - pdfs: Lista de archivos FileStorage
+    
+    Retorna:
+        - JSON con resultados del procesamiento
+    """
+    try:
+        # Obtener archivos del request
+        files = request.files.getlist('pdfs')
+        
+        if not files or len(files) == 0:
+            return jsonify({
+                'success': False,
+                'error': 'No se recibieron archivos'
+            }), 400
+        
+        # Validar número de archivos
+        MAX_FILES = 10
+        if len(files) > MAX_FILES:
+            return jsonify({
+                'success': False,
+                'error': f'Máximo {MAX_FILES} archivos permitidos'
+            }), 400
+        
+        # Filtrar archivos vacíos
+        files = [f for f in files if f.filename]
+        
+        if len(files) == 0:
+            return jsonify({
+                'success': False,
+                'error': 'No se recibieron archivos válidos'
+            }), 400
+        
+        logger.info(f"Procesando {len(files)} archivos PDF")
+        
+        # Crear procesador
+        from flask import current_app
+        upload_folder = Config.UPLOAD_FOLDER
+        processor = PDFBatchProcessor(
+            upload_folder=upload_folder,
+            max_workers=min(5, len(files)),  # Máximo 5 threads en paralelo
+            app=current_app._get_current_object()
+        )
+        
+        # Procesar archivos
+        results = processor.process_files(files)
+        
+        logger.info(f"Procesamiento completado: {results['success']} éxitos, {results['errors']} errores")
+        
+        # Retornar resultados
+        return jsonify(results), 200
+        
+    except Exception as e:
+        logger.error(f"Error en upload_pdfs: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': f'Error interno del servidor: {str(e)}'
+        }), 500

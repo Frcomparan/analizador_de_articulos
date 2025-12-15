@@ -28,7 +28,7 @@ class Config:
     # Uploads
     UPLOAD_FOLDER = os.path.join(basedir, 'uploads', 'pdfs')
     EXPORT_FOLDER = os.path.join(basedir, 'exports', 'excel')
-    MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10 MB máximo
+    MAX_CONTENT_LENGTH = 120 * 1024 * 1024  # 120 MB máximo (10 archivos × 10 MB + overhead)
     MAX_FILE_SIZE_MB = int(os.environ.get('MAX_FILE_SIZE_MB', 10))
     CLEANUP_DAYS = int(os.environ.get('CLEANUP_DAYS', 30))
     ALLOWED_EXTENSIONS = {'pdf', 'xlsx'}

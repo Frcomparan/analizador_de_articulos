@@ -13,6 +13,9 @@
             <p class="text-muted">Gestión de producción científica</p>
         </div>
         <div class="col-md-4 text-end">
+            <a href="{{ url_for('articles.upload_form') }}" class="btn btn-success me-2">
+                <i class="bi bi-cloud-upload"></i> Subir PDFs
+            </a>
             <a href="{{ url_for('articles.new') }}" class="btn btn-primary">
                 <i class="bi bi-plus-circle"></i> Nuevo Artículo
             </a>
@@ -109,6 +112,7 @@
                                 <th style="width: 150px;">Tipo</th>
                                 <th style="width: 120px;">Estado</th>
                                 <th style="width: 80px;">Año</th>
+                                <th style="width: 120px;">Origen</th>
                                 <th style="width: 150px;" class="text-end">Acciones</th>
                             </tr>
                         </thead>
@@ -123,6 +127,12 @@
                                             <small class="text-muted">
                                                 <i class="bi bi-journal"></i> {{ articulo.titulo_revista }}
                                             </small>
+                                        {% endif %}
+                                        {% if not articulo.completo %}
+                                            <br>
+                                            <span class="badge bg-warning" title="{{ articulo.campos_faltantes or 'Datos incompletos' }}">
+                                                <i class="bi bi-exclamation-triangle"></i> Incompleto
+                                            </span>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -144,6 +154,17 @@
                                             {{ articulo.anio_publicacion }}
                                         {% else %}
                                             <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if articulo.archivo_origen %}
+                                            <span class="badge bg-success" title="Extraído desde: {{ articulo.archivo_origen }}">
+                                                <i class="bi bi-file-earmark-pdf"></i> PDF
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary" title="Creado manualmente">
+                                                <i class="bi bi-pencil-square"></i> Manual
+                                            </span>
                                         {% endif %}
                                     </td>
                                     <td class="text-end table-actions">
