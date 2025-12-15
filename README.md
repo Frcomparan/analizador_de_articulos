@@ -401,7 +401,7 @@ El sistema utiliza **múltiples hilos (threading)** para procesar PDFs de forma 
 - **Ubicación**: `app/services/pdf_batch_processor.py`
 - **Máximo de hilos**: 5 archivos procesados simultáneamente
 - **Beneficio**: Reduce significativamente el tiempo de procesamiento al subir múltiples PDFs
-- **Funcionamiento**: 
+- **Funcionamiento**:
   1. Usuario sube múltiples PDFs (hasta 10 archivos)
   2. El sistema crea un pool de hasta 5 hilos trabajadores
   3. Cada hilo extrae metadatos de un PDF independientemente
@@ -412,6 +412,7 @@ El sistema utiliza **múltiples hilos (threading)** para procesar PDFs de forma 
 ### Backend Worker (Futuro)
 
 El roadmap incluye un hilo en background para:
+
 - Detección de artículos incompletos
 - Generación automática de reportes
 - Limpieza de archivos temporales
