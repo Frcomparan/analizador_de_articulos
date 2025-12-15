@@ -66,10 +66,15 @@ def new():
     GET /articles/new - Muestra formulario vacío
     POST /articles/new - Procesa creación
     """
+    from app.forms.utils import populate_autor_choices
+    
     form = ArticleForm()
     
     # Poblar campos de selección (catálogos)
     populate_form_choices(form)
+    
+    # Obtener opciones de autores para JavaScript
+    autor_choices = populate_autor_choices()
     
     if form.validate_on_submit():
         # Extraer datos del formulario
@@ -106,6 +111,7 @@ def new():
             # Procesar autores si se creó el artículo exitosamente
             if form.autores.data:
                 from app.models import ArticuloAutor, Autor
+                from app.models.relations import ArticuloIndexacion
                 from app import db
                 
                 for autor_data in form.autores.data:
@@ -124,10 +130,29 @@ def new():
                     logger.error(f"Error al agregar autores: {str(e)}")
                     flash('Artículo creado pero hubo error al agregar autores', 'warning')
             
+            # Procesar indexaciones
+            if form.indexaciones.data:
+                from app.models.relations import ArticuloIndexacion
+                from app import db
+                
+                for indexacion_id in form.indexaciones.data:
+                    if indexacion_id:
+                        articulo_indexacion = ArticuloIndexacion(
+                            articulo_id=articulo.id,
+                            indexacion_id=indexacion_id
+                        )
+                        db.session.add(articulo_indexacion)
+                
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    logger.error(f"Error al agregar indexaciones: {str(e)}")
+                    flash('Artículo creado pero hubo error al agregar indexaciones', 'warning')
+            
             flash(f'Artículo "{articulo.titulo}" creado exitosamente', 'success')
             return redirect(url_for('articles.show', id=articulo.id))
     
-    return render_template('articles/form.html', form=form, articulo=None)
+    return render_template('articles/form.html', form=form, articulo=None, autor_choices=autor_choices)
 
 
 @articles_bp.route('/<int:id>')
@@ -152,6 +177,8 @@ def edit(id):
     GET /articles/<id>/edit - Muestra formulario pre-llenado
     POST /articles/<id>/edit - Procesa actualización
     """
+    from app.forms.utils import populate_autor_choices
+    
     # Obtener artículo actual
     articulo, error = ArticleController.get_by_id(id)
     
@@ -165,9 +192,14 @@ def edit(id):
     # Poblar campos de selección
     populate_form_choices(form)
     
-    # Cargar autores existentes en modo GET
+    # Obtener opciones de autores para JavaScript
+    autor_choices = populate_autor_choices()
+    
+    # Cargar autores e indexaciones existentes en modo GET
     if request.method == 'GET':
         from app.models import ArticuloAutor
+        from app.models.relations import ArticuloIndexacion
+        
         articulo_autores = ArticuloAutor.query.filter_by(articulo_id=articulo.id).order_by(ArticuloAutor.orden).all()
         
         # Limpiar y agregar entradas de autores
@@ -180,6 +212,10 @@ def edit(id):
                 'orden': aa.orden,
                 'es_corresponsal': aa.es_corresponsal
             })
+        
+        # Cargar indexaciones existentes
+        articulo_indexaciones = ArticuloIndexacion.query.filter_by(articulo_id=articulo.id).all()
+        form.indexaciones.data = [ai.indexacion_id for ai in articulo_indexaciones]
         
         # Poblar choices de los autores recién agregados
         populate_form_choices(form)
@@ -233,6 +269,7 @@ def edit(id):
         
         # Actualizar autores
         from app.models import ArticuloAutor
+        from app.models.relations import ArticuloIndexacion
         from app import db
         
         # Eliminar autores actuales
@@ -250,13 +287,27 @@ def edit(id):
                     )
                     db.session.add(articulo_autor)
         
+        # Actualizar indexaciones
+        # Eliminar indexaciones actuales
+        ArticuloIndexacion.query.filter_by(articulo_id=id).delete()
+        
+        # Agregar nuevas indexaciones seleccionadas
+        if form.indexaciones.data:
+            for indexacion_id in form.indexaciones.data:
+                if indexacion_id:  # Asegurar que no sea 0 o vacío
+                    articulo_indexacion = ArticuloIndexacion(
+                        articulo_id=id,
+                        indexacion_id=indexacion_id
+                    )
+                    db.session.add(articulo_autor)
+        
         try:
             db.session.commit()
         except Exception as e:
             db.session.rollback()
             logger.error(f"Error al actualizar autores: {str(e)}")
             flash('Error al actualizar autores', 'error')
-            return render_template('articles/form.html', form=form, articulo=articulo)
+            return render_template('articles/form.html', form=form, articulo=articulo, autor_choices=autor_choices)
         
         # Si hay cambios en el artículo, actualizar
         if data:
@@ -271,9 +322,7 @@ def edit(id):
             flash('Artículo actualizado exitosamente', 'success')
             return redirect(url_for('articles.show', id=id))
     
-    return render_template('articles/form.html', form=form, articulo=articulo)
-
-
+    return render_template('articles/form.html', form=form, articulo=articulo, autor_choices=autor_choices)
 @articles_bp.route('/<int:id>/delete', methods=['POST'])
 def delete(id):
     """

@@ -274,6 +274,15 @@ class CatalogController:
                 db.session.commit()
                 logger.info(f"Registro {id} desactivado en {catalog_name}")
             else:
+                # Eliminación física - Manejo especial para autores
+                if catalog_name == 'autores':
+                    # Verificar si tiene artículos asociados
+                    from app.models.relations import ArticuloAutor
+                    articulos_count = ArticuloAutor.query.filter_by(autor_id=id).count()
+                    
+                    if articulos_count > 0:
+                        return False, f"No se puede eliminar el autor porque tiene {articulos_count} artículo(s) asociado(s). Desactívalo en su lugar."
+                
                 # Eliminación física
                 db.session.delete(registro)
                 db.session.commit()

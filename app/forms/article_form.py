@@ -4,7 +4,7 @@ Incluye validaciones personalizadas y campos dinámicos.
 """
 from flask_wtf import FlaskForm
 from wtforms import (
-    StringField, TextAreaField, SelectField, DateField,
+    StringField, TextAreaField, SelectField, SelectMultipleField, DateField,
     IntegerField, FloatField, BooleanField, SubmitField, FieldList, FormField
 )
 from wtforms.validators import (
@@ -222,6 +222,14 @@ class ArticleForm(FlaskForm):
         FormField(AuthorSubForm),
         min_entries=0,
         max_entries=20
+    )
+    
+    # === Indexaciones ===
+    indexaciones = SelectMultipleField(
+        'Indexaciones',
+        coerce=int,
+        validators=[Optional()],
+        choices=[]
     )
     
     # === Opciones ===

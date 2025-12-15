@@ -131,12 +131,25 @@
                     <hr>
                     
                     <h6 class="text-danger">Zona de peligro</h6>
+                    {% if catalog_name == 'autores' and registro.articulos and registro.articulos|length > 0 %}
+                    <div class="alert alert-warning py-2 px-3 mb-2">
+                        <small>
+                            <i class="bi bi-exclamation-triangle"></i>
+                            No se puede eliminar: tiene {{ registro.articulos|length }} artículo(s)
+                        </small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" disabled>
+                        <i class="bi bi-trash"></i> Eliminar (no disponible)
+                    </button>
+                    {% else %}
                     <form method="POST" action="{{ url_for('catalogs.delete', catalog_name=catalog_name, id=registro.id) }}"
-                          onsubmit="return confirm('¿Estás seguro de eliminar este registro?');">
+                          onsubmit="return confirm('¿Estás seguro de eliminar este registro? Esta acción no se puede deshacer.');">
+                        <input type="hidden" name="hard_delete" value="true">
                         <button type="submit" class="btn btn-sm btn-outline-danger">
                             <i class="bi bi-trash"></i> Eliminar registro
                         </button>
                     </form>
+                    {% endif %}
                 </div>
             </div>
         </div>

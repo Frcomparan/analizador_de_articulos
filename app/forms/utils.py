@@ -2,7 +2,7 @@
 Utilidades para formularios.
 Funciones para poblar campos dinámicos desde la base de datos.
 """
-from app.models.catalogs import TipoProduccion, Proposito, LGAC, Estado
+from app.models.catalogs import TipoProduccion, Proposito, LGAC, Estado, Indexacion
 from app.models.revista import Revista
 from app.models.autor import Autor
 
@@ -73,6 +73,17 @@ def populate_autor_choices():
     return [(0, '-- Seleccione --')] + [(a.id, a.nombre_completo) for a in autores]
 
 
+def populate_indexacion_choices():
+    """
+    Obtiene las opciones para el campo indexaciones (SelectMultipleField).
+    
+    Returns:
+        list: Lista de tuplas (id, nombre) ordenadas alfabéticamente
+    """
+    indexaciones = Indexacion.query.filter_by(activo=True).order_by(Indexacion.nombre).all()
+    return [(i.id, i.nombre) for i in indexaciones]
+
+
 def populate_form_choices(form):
     """
     Puebla todos los campos de selección de un formulario de artículo.
@@ -107,6 +118,10 @@ def populate_form_choices(form):
         for autor_form in form.autores:
             if hasattr(autor_form, 'autor_id'):
                 autor_form.autor_id.choices = autor_choices
+    
+    # Poblar indexaciones
+    if hasattr(form, 'indexaciones'):
+        form.indexaciones.choices = populate_indexacion_choices()
     
     return form
 
