@@ -136,6 +136,31 @@
                                                     <i class="bi bi-{{ 'toggle-off' if registro.activo else 'toggle-on' }}"></i>
                                                 </button>
                                             </form>
+                                            {% if catalog_name == 'autores' and registro.articulos and registro.articulos|length > 0 %}
+                                            <form method="POST" 
+                                                  action="{{ url_for('catalogs.delete', catalog_name=catalog_name, id=registro.id) }}"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('⚠️ Este autor está en {{ registro.articulos|length }} artículo(s).\n\nAl eliminarlo se quitará de todos.\n¿Continuar?');">
+                                                <input type="hidden" name="hard_delete" value="true">
+                                                <button type="submit" 
+                                                        class="btn btn-outline-danger"
+                                                        title="Eliminar (asociado a {{ registro.articulos|length }} artículo(s))">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                            {% else %}
+                                            <form method="POST" 
+                                                  action="{{ url_for('catalogs.delete', catalog_name=catalog_name, id=registro.id) }}"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('¿Estás seguro de eliminar este registro? Esta acción no se puede deshacer.');">
+                                                <input type="hidden" name="hard_delete" value="true">
+                                                <button type="submit" 
+                                                        class="btn btn-outline-danger"
+                                                        title="Eliminar">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                            {% endif %}
                                         </div>
                                     </td>
                                 </tr>

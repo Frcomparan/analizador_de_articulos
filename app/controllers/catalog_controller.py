@@ -276,12 +276,14 @@ class CatalogController:
             else:
                 # Eliminación física - Manejo especial para autores
                 if catalog_name == 'autores':
-                    # Verificar si tiene artículos asociados
+                    # Eliminar todas las relaciones con artículos antes de eliminar el autor
                     from app.models.relations import ArticuloAutor
                     articulos_count = ArticuloAutor.query.filter_by(autor_id=id).count()
                     
                     if articulos_count > 0:
-                        return False, f"No se puede eliminar el autor porque tiene {articulos_count} artículo(s) asociado(s). Desactívalo en su lugar."
+                        # Eliminar todas las relaciones articulo_autor
+                        ArticuloAutor.query.filter_by(autor_id=id).delete()
+                        logger.info(f"Eliminadas {articulos_count} relaciones de autor {id} con artículos")
                 
                 # Eliminación física
                 db.session.delete(registro)

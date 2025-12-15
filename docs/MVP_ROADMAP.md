@@ -263,20 +263,20 @@ Este documento presenta el roadmap detallado para implementar el MVP (Producto M
 
 22. **CRUD de Catálogos** (3 días)
 
-    - [ ] `CatalogController` genérico
-    - [ ] Rutas CRUD para cada catálogo
-    - [ ] Formularios dinámicos
-    - [ ] Templates reutilizables
-    - [ ] Activar/Desactivar registros
+    - [x] `CatalogController` genérico
+    - [x] Rutas CRUD para cada catálogo
+    - [x] Formularios dinámicos
+    - [x] Templates reutilizables
+    - [x] Activar/Desactivar registros
 
 23. **Catálogos Específicos** (2 días)
-    - [ ] Tipos de Producción
-    - [ ] Estados
-    - [ ] LGACs
-    - [ ] Indexaciones
-    - [ ] Autores
-    - [ ] Revistas
-    - [ ] Países
+    - [x] Tipos de Producción
+    - [x] Estados
+    - [x] LGACs
+    - [x] Indexaciones
+    - [x] Autores
+    - [x] Revistas
+    - [x] Países
 
 **Entregables**:
 

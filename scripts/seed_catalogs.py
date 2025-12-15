@@ -28,11 +28,14 @@ def seed_tipos_produccion():
         {'nombre': 'Memorias en extenso', 'descripcion': "Artículo completo en memorias de congresos"},
     ]
     
+    agregados = 0
     for t in tipos:
-        if not TipoProduccion.query.filter_by(nombre=t['nombre']).first():
+        tipo_existente = TipoProduccion.query.filter_by(nombre=t['nombre']).first()
+        if not tipo_existente:
             db.session.add(TipoProduccion(**t))
+            agregados += 1
     
-    print(f"✓ Tipos de producción: {len(tipos)} registros")
+    print(f"✓ Tipos de producción: {agregados} nuevos de {len(tipos)} registros")
 
 
 def seed_propositos():
@@ -42,11 +45,14 @@ def seed_propositos():
         {'nombre': 'Desarrollo tecnológico', 'descripcion': 'Desarrollo de nuevas tecnologías o mejoras'},
     ]
     
+    agregados = 0
     for p in propositos:
-        if not Proposito.query.filter_by(nombre=p['nombre']).first():
+        proposito_existente = Proposito.query.filter_by(nombre=p['nombre']).first()
+        if not proposito_existente:
             db.session.add(Proposito(**p))
+            agregados += 1
     
-    print(f"✓ Propósitos: {len(propositos)} registros")
+    print(f"✓ Propósitos: {agregados} nuevos de {len(propositos)} registros")
 
 
 def seed_estados():
@@ -56,11 +62,14 @@ def seed_estados():
         {'nombre': 'Publicado', 'color': '#28a745'},           # Verde
     ]
     
+    agregados = 0
     for e in estados:
-        if not Estado.query.filter_by(nombre=e['nombre']).first():
+        estado_existente = Estado.query.filter_by(nombre=e['nombre']).first()
+        if not estado_existente:
             db.session.add(Estado(**e))
+            agregados += 1
     
-    print(f"✓ Estados: {len(estados)} registros")
+    print(f"✓ Estados: {agregados} nuevos de {len(estados)} registros")
 
 
 def seed_lgac():
@@ -73,11 +82,14 @@ def seed_lgac():
          'descripcion': 'Estudio y aplicación de nuevas tecnologías en el desarrollo de aplicaciones web.'},
     ]
     
+    agregados = 0
     for l in lgacs:
-        if not LGAC.query.filter_by(nombre=l['nombre']).first():
+        lgac_existente = LGAC.query.filter_by(nombre=l['nombre']).first()
+        if not lgac_existente:
             db.session.add(LGAC(**l))
+            agregados += 1
     
-    print(f"✓ LGAC: {len(lgacs)} registros (PERSONALIZAR según el CA)")
+    print(f"✓ LGAC: {agregados} nuevos de {len(lgacs)} registros (PERSONALIZAR según el CA)")
 
 
 def seed_indexaciones():
@@ -111,11 +123,14 @@ def seed_indexaciones():
          'url': 'https://www.ebsco.com'},
     ]
     
+    agregados = 0
     for i in indexaciones:
-        if not Indexacion.query.filter_by(nombre=i['nombre']).first():
+        indexacion_existente = Indexacion.query.filter_by(nombre=i['nombre']).first()
+        if not indexacion_existente:
             db.session.add(Indexacion(**i))
+            agregados += 1
     
-    print(f"✓ Indexaciones: {len(indexaciones)} registros")
+    print(f"✓ Indexaciones: {agregados} nuevos de {len(indexaciones)} registros")
 
 
 def seed_paises():
@@ -143,27 +158,36 @@ def seed_paises():
         {'nombre': 'Cuba', 'codigo_iso': 'CUB'},
     ]
     
+    agregados = 0
     for p in paises:
-        if not Pais.query.filter_by(nombre=p['nombre']).first():
+        pais_existente = Pais.query.filter_by(nombre=p['nombre']).first()
+        if not pais_existente:
             db.session.add(Pais(**p))
+            agregados += 1
     
-    print(f"✓ Países: {len(paises)} registros")
+    print(f"✓ Países: {agregados} nuevos de {len(paises)} registros")
 
 
 def seed_all():
     """Ejecuta todos los seeds en orden."""
     print("\n=== Poblando catálogos iniciales ===\n")
     
-    seed_tipos_produccion()
-    seed_propositos()
-    seed_estados()
-    seed_lgac()
-    seed_indexaciones()
-    seed_paises()
-    
-    db.session.commit()
-    print("\n✓ Todos los catálogos han sido poblados correctamente.")
-    print("  NOTA: Recuerda personalizar las LGAC según tu Cuerpo Académico.\n")
+    try:
+        seed_tipos_produccion()
+        seed_propositos()
+        seed_estados()
+        seed_lgac()
+        seed_indexaciones()
+        seed_paises()
+        
+        db.session.commit()
+        print("\n✓ Todos los catálogos han sido poblados correctamente.")
+        print("  NOTA: Recuerda personalizar las LGAC según tu Cuerpo Académico.\n")
+    except Exception as e:
+        db.session.rollback()
+        print(f"\n✗ Error al poblar catálogos: {str(e)}")
+        print("  La transacción ha sido revertida. Intenta nuevamente.\n")
+        raise
 
 
 if __name__ == '__main__':

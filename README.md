@@ -392,34 +392,6 @@ analizador_articulos/
 └── run.py                    # Punto de entrada
 ```
 
-## Casos de Uso Principales
-
-### 1. Registro de Artículo
-
-1. Usuario sube PDF o carta de aceptación
-2. Sistema extrae automáticamente: título, autores, año, revista
-3. Usuario completa campos faltantes
-4. Sistema valida y guarda
-
-### 2. Consulta y Filtrado
-
-1. Usuario accede a la lista de artículos
-2. Aplica filtros (año, estado, LGAC)
-3. Visualiza resultados en tabla
-4. Puede editar o eliminar registros
-
-### 3. Exportación
-
-1. Usuario solicita exportación
-2. Sistema genera Excel con formato institucional
-3. Descarga automática del archivo
-
-### 4. Procesamiento Automático
-
-1. Hilo en background detecta artículos incompletos
-2. Notifica al usuario
-3. Genera reportes periódicos
-
 ## Modelo de Datos
 
 ### Tablas Principales
@@ -446,42 +418,6 @@ analizador_articulos/
 ## Documentación Adicional
 
 - **[MVP_ROADMAP.md](docs/MVP_ROADMAP.md)** - Roadmap detallado de desarrollo (8 fases)
-- **[FORMS.md](docs/FORMS.md)** - Documentación completa de formularios
-
-### Estado del Desarrollo
-
-**Fase 1: Configuración Base** ✅ Completa
-
-- Configuración del proyecto
-- Base de datos y migraciones
-- Estructura MVC
-
-**Fase 2: CRUD de Artículos** 🔄 En progreso
-
-- ✅ Paso 4: Modelos y relaciones completos
-- ✅ Paso 5: Formularios implementados (ArticleForm, ArticleSearchForm, ArticleAuthorForm)
-- ⏳ Paso 6: Controladores (siguiente)
-- ⏳ Paso 7: Vistas/Routes
-- ⏳ Paso 8: Templates
-
-## Roadmap de Desarrollo
-
-Ver [MVP_ROADMAP.md](docs/MVP_ROADMAP.md) para el plan completo.
-
-### Resumen de Fases
-
-1. **Configuración Base** (5 días) - ✅ Completo
-2. **CRUD de Artículos** (11 días) - 🔄 En progreso (Paso 5/8 completo)
-3. **Extracción de PDFs** (9 días)
-4. **Sistema de Filtrado** (5 días)
-5. **Exportación Excel** (5 días)
-6. **Procesamiento Background** (5 días)
-7. **Gestión Catálogos** (5 días)
-8. **Testing y Refinamiento** (10 días)
-
-- [ ] Hilo en background
-- [ ] Detección de artículos incompletos
-- [ ] Optimización de rendimiento
 
 ## Contribución
 

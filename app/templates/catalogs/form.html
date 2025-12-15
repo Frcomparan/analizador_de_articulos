@@ -135,12 +135,16 @@
                     <div class="alert alert-warning py-2 px-3 mb-2">
                         <small>
                             <i class="bi bi-exclamation-triangle"></i>
-                            No se puede eliminar: tiene {{ registro.articulos|length }} artículo(s)
+                            Asociado a {{ registro.articulos|length }} artículo(s). Se quitará de todos al eliminar.
                         </small>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-danger" disabled>
-                        <i class="bi bi-trash"></i> Eliminar (no disponible)
-                    </button>
+                    <form method="POST" action="{{ url_for('catalogs.delete', catalog_name=catalog_name, id=registro.id) }}"
+                          onsubmit="return confirm('⚠️ Este autor está en {{ registro.articulos|length }} artículo(s).\n\nAl eliminarlo se quitará de todos.\n¿Continuar?');">
+                        <input type="hidden" name="hard_delete" value="true">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i> Eliminar de todos los artículos
+                        </button>
+                    </form>
                     {% else %}
                     <form method="POST" action="{{ url_for('catalogs.delete', catalog_name=catalog_name, id=registro.id) }}"
                           onsubmit="return confirm('¿Estás seguro de eliminar este registro? Esta acción no se puede deshacer.');">
