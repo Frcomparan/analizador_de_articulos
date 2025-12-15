@@ -18,6 +18,7 @@ class Articulo(db.Model):
     # === Información básica del artículo ===
     titulo = db.Column(db.String(500), nullable=False)
     titulo_revista = db.Column(db.String(300), nullable=True)  # Puede diferir de revista.nombre
+    descripcion = db.Column(db.Text, nullable=True)  # Resumen/Abstract del artículo
     
     # === Clasificación y tipo ===
     tipo_produccion_id = db.Column(db.Integer, db.ForeignKey('tipos_produccion.id'), 

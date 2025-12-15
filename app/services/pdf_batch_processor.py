@@ -239,6 +239,7 @@ class PDFBatchProcessor:
             anio_publicacion=metadata.get('anio_publicacion'),
             doi=metadata.get('doi'),
             issn=metadata.get('issn'),
+            descripcion=metadata.get('resumen'),  # Mapear resumen extraído a descripción
             archivo_origen=original_filename,
             completo=False,  # Marcar como incompleto para edición posterior
             campos_faltantes=self._identify_missing_fields(metadata),

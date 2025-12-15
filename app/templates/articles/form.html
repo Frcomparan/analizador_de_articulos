@@ -53,6 +53,18 @@
                             {% endif %}
                         </div>
 
+                        <!-- Descripción/Resumen -->
+                        <div class="mb-3">
+                            {{ form.descripcion.label(class="form-label") }}
+                            {{ form.descripcion(class="form-control" + (" is-invalid" if form.descripcion.errors else "")) }}
+                            {% if form.descripcion.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.descripcion.errors[0] }}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Resumen o abstract del artículo (opcional)</small>
+                        </div>
+
                         <hr class="my-4">
 
                         <!-- Clasificación -->

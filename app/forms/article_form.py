@@ -68,6 +68,15 @@ class ArticleForm(FlaskForm):
         render_kw={'placeholder': 'Nombre de la revista donde se publicó'}
     )
     
+    descripcion = TextAreaField(
+        'Descripción/Resumen',
+        validators=[Optional()],
+        render_kw={
+            'placeholder': 'Resumen o abstract del artículo',
+            'rows': 5
+        }
+    )
+    
     # === Clasificación ===
     tipo_produccion_id = SelectField(
         'Tipo de producción',

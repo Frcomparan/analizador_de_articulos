@@ -81,6 +81,7 @@ def new():
         data = {
             'titulo': form.titulo.data,
             'titulo_revista': form.titulo_revista.data,
+            'descripcion': form.descripcion.data,
             'tipo_produccion_id': form.tipo_produccion_id.data,
             'proposito_id': form.proposito_id.data if form.proposito_id.data else None,
             'lgac_id': form.lgac_id.data if form.lgac_id.data else None,
@@ -228,6 +229,8 @@ def edit(id):
             data['titulo'] = form.titulo.data
         if form.titulo_revista.data != articulo.titulo_revista:
             data['titulo_revista'] = form.titulo_revista.data
+        if form.descripcion.data != articulo.descripcion:
+            data['descripcion'] = form.descripcion.data
         if form.tipo_produccion_id.data != articulo.tipo_produccion_id:
             data['tipo_produccion_id'] = form.tipo_produccion_id.data
         if form.proposito_id.data != articulo.proposito_id:
