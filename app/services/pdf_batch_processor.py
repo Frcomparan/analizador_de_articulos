@@ -159,11 +159,24 @@ class PDFBatchProcessor:
             raise Exception(f"Error al extraer metadatos: {metadata['error']}")
         
         # 3. Crear artículo en la BD
-        articulo = self._create_article_from_metadata(
-            metadata,
-            original_filename=file.filename,
-            stored_filepath=filepath
-        )
+        try:
+            articulo = self._create_article_from_metadata(
+                metadata,
+                original_filename=file.filename,
+                stored_filepath=filepath
+            )
+        except Exception as e:
+            # Si falla la creación del artículo, eliminar el archivo subido
+            self.file_handler.delete_file(filepath)
+            
+            # Verificar si es un error de DOI duplicado
+            error_msg = str(e)
+            if 'UNIQUE constraint failed: articulos.doi' in error_msg or 'duplicate key' in error_msg.lower():
+                doi = metadata.get('doi', 'desconocido')
+                raise Exception(f"Ya existe un artículo con el DOI: {doi}. No se puede duplicar el registro.")
+            else:
+                # Otro tipo de error
+                raise Exception(f"Error al crear el artículo: {str(e)}")
         
         processing_time = (datetime.now() - start_time).total_seconds()
         
@@ -195,7 +208,17 @@ class PDFBatchProcessor:
             
         Returns:
             Instancia de Articulo creada
+            
+        Raises:
+            Exception: Si ya existe un artículo con el mismo DOI
         """
+        # Verificar si ya existe un artículo con este DOI
+        doi = metadata.get('doi')
+        if doi:
+            articulo_existente = Articulo.query.filter_by(doi=doi).first()
+            if articulo_existente:
+                raise Exception(f"Ya existe un artículo con el DOI: {doi}. Título: '{articulo_existente.titulo}'")
+        
         # Obtener o crear tipo de producción por defecto
         tipo_default = TipoProduccion.query.filter_by(
             nombre='Artículo científico'
