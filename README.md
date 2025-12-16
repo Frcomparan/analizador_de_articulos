@@ -30,6 +30,7 @@ Aplicación web local desarrollada en Python con Flask para el registro, consult
   - Python 3.11 o 3.12 es la versión más estable para este proyecto
 - pip (gestor de paquetes de Python)
 - Navegador web moderno (Chrome, Firefox, Edge)
+- **Docker** (opcional, para GROBID - extracción mejorada de PDFs)
 
 ## 🚀 Inicio Rápido
 
@@ -45,7 +46,11 @@ source venv/bin/activate  # Linux/Mac
 flask db upgrade
 python scripts/seed_catalogs.py
 
-# 3. Ejecutar la aplicación
+# 3. (OPCIONAL) Iniciar GROBID con Docker para mejor extracción de PDFs
+docker run --rm --init -p 8070:8070 lfoppiano/grobid:0.8.2
+# Deja este terminal abierto o ejecuta en segundo plano con -d
+
+# 4. Ejecutar la aplicación
 python run.py
 ```
 
@@ -179,7 +184,52 @@ python scripts/seed_catalogs.py
 python run.py
 ```
 
-### 6. Verificar la Instalación
+### 6. (Opcional) Instalar y Ejecutar GROBID con Docker
+
+GROBID es un servicio de Machine Learning que mejora significativamente la extracción de metadatos de PDFs académicos. **Es completamente opcional** - si no lo instalas, el sistema usará extracción por heurísticas (regex).
+
+#### ¿Qué es GROBID?
+
+- Servicio ML especializado en papers académicos
+- Extrae título, autores, abstract, DOI, año con alta precisión
+- Reduce falsos positivos en PDFs con formatos inconsistentes
+
+#### Instalación con Docker
+
+**Requisito**: Tener [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado.
+
+**Ejecutar GROBID:**
+
+```bash
+# Descargar y ejecutar GROBID (primera vez descarga ~1.5GB)
+docker run --rm --init -p 8070:8070 lfoppiano/grobid:0.8.2
+
+# Para ejecutar en segundo plano (background):
+docker run -d --rm --init -p 8070:8070 lfoppiano/grobid:0.8.2
+```
+
+**Verificar que está funcionando:**
+
+1. Abre en tu navegador: http://localhost:8070
+2. O verifica el healthcheck: http://localhost:8070/api/isalive (debería responder "true")
+
+**Probar la integración:**
+
+```bash
+# Con el entorno virtual activado:
+python scripts/test_grobid.py
+```
+
+Este script compara la extracción con GROBID vs heurísticas y muestra la diferencia en precisión.
+
+**Notas:**
+
+- GROBID se ejecuta en puerto 8070 (no interfiere con Flask en puerto 5000)
+- Si GROBID no está disponible, el sistema automáticamente usa heurísticas
+- Puedes detener GROBID cuando no lo uses (Ctrl+C si está en foreground)
+- Para mayor información: [docs/GROBID_INTEGRATION.md](docs/GROBID_INTEGRATION.md)
+
+### 7. Verificar la Instalación
 
 Abre tu navegador y accede a `http://localhost:5000`. Deberías ver:
 

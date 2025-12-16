@@ -668,7 +668,7 @@ class PDFService:
             
             # Autores
             authors = []
-            for pers in root.findall(".//tei:sourceDesc//tei:author/tei:persName", self.TEI_NS):
+            for idx, pers in enumerate(root.findall(".//tei:sourceDesc//tei:author/tei:persName", self.TEI_NS), 1):
                 forenames = [
                     fn.text for fn in pers.findall("./tei:forename", self.TEI_NS) 
                     if fn.text
@@ -677,9 +677,13 @@ class PDFService:
                 surname = surname_el.text if surname_el is not None and surname_el.text else ""
                 
                 if forenames or surname:
-                    full_name = " ".join(forenames + [surname]).strip()
-                    if full_name:
-                        authors.append(full_name)
+                    # Formato esperado por el sistema
+                    author_dict = {
+                        'nombre': " ".join(forenames).strip(),
+                        'apellidos': surname.strip(),
+                        'orden': idx
+                    }
+                    authors.append(author_dict)
             
             if authors:
                 result['authors'] = authors
@@ -763,12 +767,17 @@ class PDFService:
         
         # Autores
         authors = []
-        for author in (msg.get('author') or []):
+        for idx, author in enumerate((msg.get('author') or []), 1):
             given = author.get('given', '')
             family = author.get('family', '')
-            full_name = f"{given} {family}".strip()
-            if full_name:
-                authors.append(full_name)
+            if given or family:
+                # Formato esperado por el sistema
+                author_dict = {
+                    'nombre': given.strip(),
+                    'apellidos': family.strip(),
+                    'orden': idx
+                }
+                authors.append(author_dict)
         
         if authors:
             result['authors'] = authors

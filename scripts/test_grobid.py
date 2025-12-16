@@ -35,7 +35,7 @@ def test_extraction_with_sample():
     print("=" * 60)
     
     # Buscar un PDF de ejemplo en uploads
-    uploads_dir = os.path.join(os.path.dirname(__file__), '..', 'uploads')
+    uploads_dir = os.path.join(os.path.dirname(__file__), '..', 'pdf/art_rev_indexada')
     
     if not os.path.exists(uploads_dir):
         print("❌ No existe el directorio 'uploads'")
@@ -78,10 +78,10 @@ def test_comparison():
     print("TEST 3: Comparación GROBID vs Heurísticas")
     print("=" * 60)
     
-    uploads_dir = os.path.join(os.path.dirname(__file__), '..', 'uploads')
+    uploads_dir = os.path.join(os.path.dirname(__file__), '..', 'pdf/art_rev_indexada')
     
     if not os.path.exists(uploads_dir):
-        print("❌ No existe el directorio 'uploads'")
+        print("❌ No existe el directorio 'pdf/art_rev_indexada'")
         return
     
     pdf_files = [f for f in os.listdir(uploads_dir) if f.endswith('.pdf')]
