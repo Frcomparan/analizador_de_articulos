@@ -166,6 +166,9 @@ class PDFBatchProcessor:
                 stored_filepath=filepath
             )
         except Exception as e:
+            # IMPORTANTE: Hacer rollback de la sesión si hubo error
+            db.session.rollback()
+            
             # Si falla la creación del artículo, eliminar el archivo subido
             self.file_handler.delete_file(filepath)
             
@@ -219,33 +222,35 @@ class PDFBatchProcessor:
             if articulo_existente:
                 raise Exception(f"Ya existe un artículo con el DOI: {doi}. Título: '{articulo_existente.titulo}'")
         
-        # Obtener o crear tipo de producción por defecto
+        # Obtener tipo de producción por defecto (debe existir desde seed_catalogs.py)
         tipo_default = TipoProduccion.query.filter_by(
             nombre='Artículo científico'
         ).first()
         
         if not tipo_default:
-            # Crear si no existe
-            tipo_default = TipoProduccion(
-                nombre='Artículo científico',
-                activo=True
-            )
-            db.session.add(tipo_default)
-            db.session.flush()
+            # Fallback: buscar el primer tipo activo disponible
+            tipo_default = TipoProduccion.query.filter_by(activo=True).first()
+            
+            if not tipo_default:
+                raise ValueError(
+                    "No hay tipos de producción en la base de datos. "
+                    "Ejecuta: python scripts/seed_catalogs.py"
+                )
         
-        # Obtener estado "Publicado" por defecto
+        # Obtener estado "Publicado" por defecto (debe existir desde seed_catalogs.py)
         estado_default = Estado.query.filter_by(
             nombre='Publicado'
         ).first()
         
         if not estado_default:
-            estado_default = Estado(
-                nombre='Publicado',
-                color='#28a745',
-                activo=True
-            )
-            db.session.add(estado_default)
-            db.session.flush()
+            # Fallback: buscar el primer estado activo disponible
+            estado_default = Estado.query.filter_by(activo=True).first()
+            
+            if not estado_default:
+                raise ValueError(
+                    "No hay estados en la base de datos. "
+                    "Ejecuta: python scripts/seed_catalogs.py"
+                )
         
         # Preparar datos del artículo
         titulo = metadata.get('titulo') or f"Documento sin título - {original_filename}"
@@ -278,15 +283,28 @@ class PDFBatchProcessor:
             from app.models.autor import Autor
             from app.models.relations import ArticuloAutor
             
-            for idx, autor_nombre in enumerate(metadata['autores'], start=1):
-                # Intentar parsear nombre y apellidos
-                partes = autor_nombre.strip().split()
-                if len(partes) >= 2:
-                    nombre = partes[0]
-                    apellidos = ' '.join(partes[1:])
+            for idx, autor_data in enumerate(metadata['autores'], start=1):
+                # Manejar formato dict (GROBID/Crossref) o string (heurísticas)
+                if isinstance(autor_data, dict):
+                    # Formato nuevo: {'nombre': 'John', 'apellidos': 'Doe', 'orden': 1}
+                    nombre = autor_data.get('nombre', '').strip()
+                    apellidos = autor_data.get('apellidos', '').strip()
+                    orden = autor_data.get('orden', idx)
                 else:
-                    nombre = autor_nombre
-                    apellidos = ''
+                    # Formato legacy: string "John Doe"
+                    autor_nombre = str(autor_data).strip()
+                    partes = autor_nombre.split()
+                    if len(partes) >= 2:
+                        nombre = partes[0]
+                        apellidos = ' '.join(partes[1:])
+                    else:
+                        nombre = autor_nombre
+                        apellidos = ''
+                    orden = idx
+                
+                # Validar que hay al menos nombre o apellidos
+                if not nombre and not apellidos:
+                    continue
                 
                 # Buscar o crear autor
                 autor = Autor.query.filter_by(
@@ -308,8 +326,8 @@ class PDFBatchProcessor:
                 articulo_autor = ArticuloAutor(
                     articulo_id=articulo.id,
                     autor_id=autor.id,
-                    orden=idx,
-                    es_corresponsal=(idx == 1)  # Primer autor como corresponsal
+                    orden=orden,
+                    es_corresponsal=(orden == 1)  # Primer autor como corresponsal
                 )
                 db.session.add(articulo_autor)
         

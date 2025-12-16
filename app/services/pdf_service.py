@@ -729,17 +729,14 @@ class PDFService:
             # Limpiar DOI
             doi = doi.strip()
             
-            # Consultar Crossref
-            params = {
-                'select': 'DOI,title,author,issued,container-title,ISSN,URL'
-            }
+            # Headers recomendados por Crossref
             headers = {
-                'User-Agent': 'SGAA-metadata-extractor/1.0'
+                'User-Agent': 'SGAA-metadata-extractor/1.0 (mailto:support@example.com)'
             }
             
+            # Consultar Crossref (sin select para evitar errores de campos no disponibles)
             response = requests.get(
                 f"{self.CROSSREF_API}/works/{doi}",
-                params=params,
                 headers=headers,
                 timeout=20
             )
