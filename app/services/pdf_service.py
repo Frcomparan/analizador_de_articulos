@@ -12,6 +12,8 @@ from datetime import datetime
 import PyPDF2
 import pdfplumber
 import pikepdf
+import requests
+from xml.etree import ElementTree as ET
 
 # Configurar logging
 logger = logging.getLogger(__name__)
@@ -20,8 +22,15 @@ logger = logging.getLogger(__name__)
 class PDFService:
     """
     Servicio para extraer metadatos de archivos PDF académicos.
-    Utiliza múltiples estrategias para maximizar la tasa de éxito.
+    Utiliza múltiples estrategias para maximizar la tasa de éxito:
+    1. GROBID (ML-based) + Crossref API (metadatos confiables)
+    2. Heurísticas basadas en regex (fallback)
     """
+    
+    # URLs de servicios externos
+    GROBID_URL = "http://localhost:8070"  # URL por defecto de GROBID
+    CROSSREF_API = "https://api.crossref.org"
+    TEI_NS = {"tei": "http://www.tei-c.org/ns/1.0"}  # Namespace para TEI XML
     
     # Patrones regex para extracción
     DOI_PATTERN = re.compile(
@@ -58,9 +67,17 @@ class PDFService:
         '1. introduction', '1 introduction'
     ]
     
-    def __init__(self):
-        """Inicializa el servicio de extracción PDF"""
+    def __init__(self, grobid_url: Optional[str] = None, enable_grobid: bool = True):
+        """Inicializa el servicio de extracción PDF
+        
+        Args:
+            grobid_url: URL personalizada para GROBID (default: localhost:8070)
+            enable_grobid: Si se debe intentar usar GROBID (default: True)
+        """
         self.logger = logging.getLogger(__name__)
+        self.grobid_url = grobid_url or self.GROBID_URL
+        self.enable_grobid = enable_grobid
+        self.grobid_available = None  # Cache del estado de GROBID
     
     def extract_text(self, pdf_path: str, max_pages: int = 5) -> Tuple[bool, Optional[str], Optional[str]]:
         """
@@ -158,6 +175,7 @@ class PDFService:
     def extract_metadata(self, pdf_path: str) -> Dict[str, any]:
         """
         Extrae todos los metadatos posibles de un PDF.
+        Pipeline: GROBID -> Crossref -> Heurísticas fallback
         
         Args:
             pdf_path: Ruta al archivo PDF
@@ -176,8 +194,53 @@ class PDFService:
             'emails': [],
             'success': False,
             'error': None,
-            'confidence': 0.0  # Nivel de confianza (0-1)
+            'confidence': 0.0,
+            'extraction_method': None  # grobid+crossref, grobid, heuristic
         }
+        
+        # === ESTRATEGIA 1: GROBID (ML-based) ===
+        if self.enable_grobid and self._is_grobid_available():
+            try:
+                self.logger.info("Intentando extracción con GROBID...")
+                grobid_data = self._extract_with_grobid(pdf_path)
+                
+                if grobid_data:
+                    result.update({
+                        'titulo': grobid_data.get('title'),
+                        'autores': grobid_data.get('authors', []),
+                        'anio_publicacion': grobid_data.get('year'),
+                        'doi': grobid_data.get('doi'),
+                        'resumen': grobid_data.get('abstract'),
+                        'success': True,
+                        'extraction_method': 'grobid'
+                    })
+                    
+                    # Si hay DOI, intentar Crossref para mejorar metadatos
+                    if result['doi']:
+                        try:
+                            self.logger.info(f"DOI encontrado: {result['doi']}, consultando Crossref...")
+                            crossref_data = self._query_crossref(result['doi'])
+                            
+                            if crossref_data:
+                                # Crossref es más confiable, sobrescribir campos
+                                result['titulo'] = crossref_data.get('title') or result['titulo']
+                                result['autores'] = crossref_data.get('authors') or result['autores']
+                                result['anio_publicacion'] = crossref_data.get('year') or result['anio_publicacion']
+                                result['issn'] = crossref_data.get('issn')
+                                result['extraction_method'] = 'grobid+crossref'
+                                
+                        except Exception as e:
+                            self.logger.warning(f"Error consultando Crossref: {e}")
+                    
+                    # Calcular confianza
+                    result['confidence'] = self._calculate_confidence(result)
+                    return result
+                    
+            except Exception as e:
+                self.logger.warning(f"Error con GROBID: {e}")
+        
+        # === ESTRATEGIA 2: Heurísticas (Fallback) ===
+        self.logger.info("Usando extracción heurística...")
         
         # Extraer texto
         success, text, error = self.extract_text(pdf_path)
@@ -187,8 +250,9 @@ class PDFService:
             return result
         
         result['success'] = True
+        result['extraction_method'] = 'heuristic'
         
-        # Extraer cada campo
+        # Extraer cada campo con heurísticas
         result['titulo'] = self.extract_title(text)
         result['autores'] = self.extract_authors(text)
         result['anio_publicacion'] = self.extract_year(text)
@@ -198,18 +262,45 @@ class PDFService:
         result['palabras_clave'] = self.extract_keywords(text)
         result['emails'] = self.extract_emails(text)
         
-        # Calcular nivel de confianza basado en campos encontrados
-        fields_found = sum([
-            bool(result['titulo']),
-            bool(result['autores']),
-            bool(result['anio_publicacion']),
-            bool(result['doi']),
-            bool(result['issn']),
-            bool(result['resumen'])
-        ])
-        result['confidence'] = fields_found / 6.0
+        # Si encontramos DOI con heurísticas, intentar Crossref
+        if result['doi'] and not result.get('extraction_method', '').startswith('grobid'):
+            try:
+                crossref_data = self._query_crossref(result['doi'])
+                if crossref_data:
+                    result['titulo'] = crossref_data.get('title') or result['titulo']
+                    result['autores'] = crossref_data.get('authors') or result['autores']
+                    result['anio_publicacion'] = crossref_data.get('year') or result['anio_publicacion']
+                    result['issn'] = crossref_data.get('issn')
+                    result['extraction_method'] = 'heuristic+crossref'
+            except Exception as e:
+                self.logger.warning(f"Error consultando Crossref: {e}")
+        
+        # Calcular nivel de confianza
+        result['confidence'] = self._calculate_confidence(result)
         
         return result
+    
+    def _calculate_confidence(self, metadata: Dict) -> float:
+        """Calcula el nivel de confianza de los metadatos extraídos"""
+        fields_found = sum([
+            bool(metadata.get('titulo')),
+            bool(metadata.get('autores')),
+            bool(metadata.get('anio_publicacion')),
+            bool(metadata.get('doi')),
+            bool(metadata.get('issn')),
+            bool(metadata.get('resumen'))
+        ])
+        
+        base_confidence = fields_found / 6.0
+        
+        # Boost de confianza si usó GROBID+Crossref
+        method = metadata.get('extraction_method', '')
+        if 'crossref' in method:
+            base_confidence = min(1.0, base_confidence + 0.2)
+        elif method == 'grobid':
+            base_confidence = min(1.0, base_confidence + 0.1)
+        
+        return base_confidence
     
     def extract_title(self, text: str) -> Optional[str]:
         """
@@ -506,3 +597,202 @@ class PDFService:
             self.logger.error(f"Error al obtener info del PDF: {e}")
         
         return info
+    
+    # ========== MÉTODOS PARA GROBID Y CROSSREF ==========
+    
+    def _is_grobid_available(self) -> bool:
+        """
+        Verifica si GROBID está disponible y responde.
+        Cachea el resultado para evitar múltiples checks.
+        """
+        if self.grobid_available is not None:
+            return self.grobid_available
+        
+        try:
+            response = requests.get(
+                f"{self.grobid_url}/api/isalive",
+                timeout=3
+            )
+            self.grobid_available = (
+                response.status_code == 200 and 
+                "true" in response.text.lower()
+            )
+        except Exception as e:
+            self.logger.warning(f"GROBID no disponible: {e}")
+            self.grobid_available = False
+        
+        return self.grobid_available
+    
+    def _extract_with_grobid(self, pdf_path: str) -> Optional[Dict[str, any]]:
+        """
+        Extrae metadatos usando GROBID (ML-based).
+        Envía el PDF a GROBID y parsea el TEI XML resultante.
+        """
+        try:
+            # Enviar PDF a GROBID
+            with open(pdf_path, 'rb') as f:
+                files = {
+                    'input': (Path(pdf_path).name, f, 'application/pdf')
+                }
+                headers = {'Accept': 'application/xml'}
+                
+                response = requests.post(
+                    f"{self.grobid_url}/api/processHeaderDocument",
+                    files=files,
+                    headers=headers,
+                    timeout=60
+                )
+                response.raise_for_status()
+            
+            # Parsear TEI XML
+            tei_xml = response.text
+            return self._parse_grobid_tei(tei_xml)
+            
+        except Exception as e:
+            self.logger.error(f"Error con GROBID: {e}")
+            return None
+    
+    def _parse_grobid_tei(self, tei_xml: str) -> Dict[str, any]:
+        """
+        Parsea TEI XML de GROBID y extrae metadatos.
+        """
+        try:
+            root = ET.fromstring(tei_xml)
+            
+            result = {}
+            
+            # Título
+            title_el = root.find(".//tei:titleStmt/tei:title", self.TEI_NS)
+            if title_el is not None and title_el.text:
+                result['title'] = title_el.text.strip()
+            
+            # Autores
+            authors = []
+            for pers in root.findall(".//tei:sourceDesc//tei:author/tei:persName", self.TEI_NS):
+                forenames = [
+                    fn.text for fn in pers.findall("./tei:forename", self.TEI_NS) 
+                    if fn.text
+                ]
+                surname_el = pers.find("./tei:surname", self.TEI_NS)
+                surname = surname_el.text if surname_el is not None and surname_el.text else ""
+                
+                if forenames or surname:
+                    full_name = " ".join(forenames + [surname]).strip()
+                    if full_name:
+                        authors.append(full_name)
+            
+            if authors:
+                result['authors'] = authors
+            
+            # Año de publicación
+            date_el = root.find(".//tei:sourceDesc//tei:date", self.TEI_NS)
+            if date_el is not None:
+                when = date_el.attrib.get("when")
+                candidate = when or (date_el.text or "")
+                year_match = re.search(r'\b(19\d{2}|20\d{2})\b', candidate)
+                if year_match:
+                    result['year'] = int(year_match.group(0))
+            
+            # DOI
+            for idno in root.findall(".//tei:idno", self.TEI_NS):
+                if idno.attrib.get("type", "").lower() == "doi" and idno.text:
+                    result['doi'] = idno.text.strip()
+                    break
+            
+            # Abstract
+            abs_el = root.find(".//tei:profileDesc/tei:abstract", self.TEI_NS)
+            if abs_el is not None:
+                abstract_text = " ".join(" ".join(abs_el.itertext()).split())
+                if abstract_text and len(abstract_text) > 50:
+                    result['abstract'] = abstract_text
+            
+            # Revista/Journal
+            journal_el = root.find(".//tei:sourceDesc//tei:title[@level='j']", self.TEI_NS)
+            if journal_el is not None and journal_el.text:
+                result['journal'] = journal_el.text.strip()
+            
+            return result
+            
+        except Exception as e:
+            self.logger.error(f"Error parseando TEI XML: {e}")
+            return {}
+    
+    def _query_crossref(self, doi: str) -> Optional[Dict[str, any]]:
+        """
+        Consulta Crossref API para obtener metadatos limpios por DOI.
+        """
+        try:
+            # Limpiar DOI
+            doi = doi.strip()
+            
+            # Consultar Crossref
+            params = {
+                'select': 'DOI,title,author,issued,container-title,ISSN,URL'
+            }
+            headers = {
+                'User-Agent': 'SGAA-metadata-extractor/1.0'
+            }
+            
+            response = requests.get(
+                f"{self.CROSSREF_API}/works/{doi}",
+                params=params,
+                headers=headers,
+                timeout=20
+            )
+            response.raise_for_status()
+            
+            data = response.json()
+            return self._parse_crossref_response(data)
+            
+        except Exception as e:
+            self.logger.error(f"Error consultando Crossref: {e}")
+            return None
+    
+    def _parse_crossref_response(self, response_json: Dict) -> Dict[str, any]:
+        """
+        Parsea la respuesta de Crossref y extrae metadatos.
+        """
+        msg = response_json.get('message', {})
+        
+        result = {}
+        
+        # Título
+        title = msg.get('title')
+        if title and isinstance(title, list) and title:
+            result['title'] = title[0]
+        
+        # Autores
+        authors = []
+        for author in (msg.get('author') or []):
+            given = author.get('given', '')
+            family = author.get('family', '')
+            full_name = f"{given} {family}".strip()
+            if full_name:
+                authors.append(full_name)
+        
+        if authors:
+            result['authors'] = authors
+        
+        # Año de publicación
+        issued = msg.get('issued', {}) or {}
+        date_parts = issued.get('date-parts')
+        if date_parts and date_parts[0] and date_parts[0][0]:
+            result['year'] = int(date_parts[0][0])
+        
+        # ISSN
+        issn_list = msg.get('ISSN')
+        if issn_list and isinstance(issn_list, list):
+            result['issn'] = issn_list[0]
+        
+        # DOI
+        result['doi'] = msg.get('DOI')
+        
+        # URL
+        result['url'] = msg.get('URL')
+        
+        # Revista/Journal
+        container = msg.get('container-title')
+        if container and isinstance(container, list) and container:
+            result['journal'] = container[0]
+        
+        return result

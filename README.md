@@ -392,6 +392,39 @@ analizador_articulos/
 └── run.py                    # Punto de entrada
 ```
 
+## Extracción de Metadatos con IA
+
+### Pipeline de Extracción Inteligente
+
+El sistema utiliza un **pipeline multinivel** para extraer metadatos de PDFs académicos:
+
+#### 1. GROBID (Machine Learning) - Primera Opción
+
+- **Qué es**: Servicio ML especializado en papers académicos
+- **Ventajas**:
+  - Precisión superior con PDFs académicos
+  - Reduce falsos positivos
+  - Extrae estructura completa (título, autores, abstract, DOI)
+- **Requisito**: Docker con GROBID corriendo en puerto 8070
+- **Inicio rápido**:
+  ```bash
+  docker run --rm --init -p 8070:8070 lfoppiano/grobid:0.8.2
+  ```
+
+#### 2. Crossref API - Validación
+
+- Si se encuentra DOI, consulta Crossref para metadatos oficiales
+- Sobrescribe datos con información verificada
+- No requiere configuración
+
+#### 3. Heurísticas (Regex) - Fallback
+
+- Si GROBID no está disponible, usa extracción por patrones
+- Funciona con PDFs de formato inconsistente
+- Mayor tasa de falsos positivos
+
+**Flujo**: `GROBID → Crossref (si hay DOI) → Heurísticas (fallback)`
+
 ## Procesamiento Paralelo y Concurrencia
 
 ### Subida Masiva de Artículos
